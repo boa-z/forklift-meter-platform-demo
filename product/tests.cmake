@@ -23,6 +23,7 @@ add_test(NAME fonts COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/to
 add_test(NAME assets COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_assets.py --product-root ${METER_PRODUCT_ROOT})
 add_test(NAME demo-docs-sync COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/check_docs_sync.py --root ${METER_PRODUCT_ROOT})
 add_test(NAME demo-docs-evidence COMMAND ${Python3_EXECUTABLE} ${METER_PRODUCT_ROOT}/tools/check_docs.py)
+add_test(NAME demo-source-digest COMMAND ${Python3_EXECUTABLE} ${METER_PRODUCT_ROOT}/tools/test_capture_sources.py)
 if(METER_BUILD_UI)
     add_executable(test-pagination "${METER_PRODUCT_ROOT}/tests/test_pagination.c")
     target_link_libraries(test-pagination PRIVATE meter_ui_product meter_platform meter_core)

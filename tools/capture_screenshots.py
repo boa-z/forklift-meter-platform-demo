@@ -20,7 +20,9 @@ def digest(path):
 
 def source_digest(root, directories=SOURCE_DIRS):
     result = hashlib.sha256()
-    for path in sorted(p for name in directories for p in (root / name).rglob('*') if p.is_file()):
+    # Path 在 Windows 按大小写不敏感排序；摘要统一使用 POSIX 字符串顺序。
+    files = (p for name in directories for p in (root / name).rglob('*') if p.is_file())
+    for path in sorted(files, key=lambda p: p.relative_to(root).as_posix()):
         result.update(path.relative_to(root).as_posix().encode('utf-8') + b'\0')
         result.update(path.read_bytes())
     return result.hexdigest()
