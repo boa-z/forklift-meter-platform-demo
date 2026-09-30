@@ -349,7 +349,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_pos(side_advanced, 0, 64);
     lv_obj_set_size(side_advanced, 200, 64);
     lv_obj_t *side_label =
-        demo_text(u, side_advanced, 18, 0, DEMO_TXT_ADMIN_SETTINGS, &lv_font_montserrat_16, 0xffffff);
+        demo_text(u, side_advanced, 4, 0, DEMO_TXT_ADMIN_SETTINGS, &lv_font_montserrat_14, 0xffffff);
     lv_obj_set_width(side_label, 176);
     lv_label_set_long_mode(side_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(side_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -525,7 +525,7 @@ void demo_settings_update(demo_ui_t *u)
     for (unsigned i = 0; i < sizeof(dynamic) / sizeof(dynamic[0]); ++i)
         lv_obj_set_style_text_font(dynamic[i], font, 0);
     for (unsigned i = 0; i < 2; ++i)
-        lv_obj_set_style_text_font(lv_obj_get_child(u->settings_menu[i], 0), font, 0);
+        meter_i18n_apply_font(lv_obj_get_child(u->settings_menu[i], 0), u->view.language, METER_FONT_LABEL);
     for (unsigned i = 0; i < 4; ++i)
     {
         lv_obj_set_style_text_font(u->admin_value_labels[i], font, 0);

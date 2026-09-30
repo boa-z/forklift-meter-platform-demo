@@ -94,8 +94,8 @@ void demo_monitor_create(demo_ui_t *u)
         demo_theme_menu_button(modes[i], i == 0);
         lv_obj_set_pos(modes[i], 0, (int)i * 64);
         lv_obj_set_size(modes[i], 200, 64);
-        lv_obj_t *label = demo_text(u, modes[i], 8, 0, mode_ids[i], &lv_font_montserrat_14, 0xedf5f8);
-        lv_obj_set_width(label, 184);
+        lv_obj_t *label = demo_text(u, modes[i], 2, 0, mode_ids[i], &lv_font_montserrat_14, 0xedf5f8);
+        lv_obj_set_width(label, 196);
         lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
         if (i == 0)
             u->monitor_mode_label = label;
