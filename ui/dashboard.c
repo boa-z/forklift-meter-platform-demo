@@ -25,8 +25,9 @@ void demo_dashboard_create(demo_ui_t *u)
     u->height = meter_linear_meter_create(height, 15, 30, 185, 45, 0, 6, "m");
     lv_obj_t *load = demo_panel(page, 567, 222, 217, 80);
     flatten_dashboard_panel(load);
-    u->load = meter_value_label_create(load, 15, 34, "kg");
-    u->load_arc = meter_arc_bar_create(load, 151, 20, 60, 0, 360, 5, "kg");
+    /* 载荷由环形控件统一呈现，数值标签保留在屏外供 Product 投影更新。 */
+    u->load = meter_value_label_create(load, -200, -200, "kg");
+    u->load_arc = meter_arc_bar_create(load, 128, 4, 76, 0, 360, 5, "kg");
     lv_obj_t *mileage = demo_panel(page, 16, 314, 180, 52);
     flatten_dashboard_panel(mileage);
     demo_text(u, mileage, 0, 0, DEMO_TXT_MILEAGE, &lv_font_montserrat_16, 0xa5afb8);

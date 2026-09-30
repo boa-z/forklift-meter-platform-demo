@@ -207,7 +207,7 @@ static lv_obj_t *settings_button(demo_ui_t *u, lv_obj_t *parent, int x, int y, d
     lv_obj_set_style_text_color(button, lv_color_hex(0xedf5f8), 0);
     lv_obj_set_pos(button, x, y);
     lv_obj_set_size(button, 250, 48);
-    lv_obj_t *label = demo_text(u, button, 0, 0, text, &lv_font_montserrat_20, 0xedf5f8);
+    lv_obj_t *label = demo_text(u, button, 0, 0, text, &lv_font_montserrat_16, 0xedf5f8);
     lv_obj_center(label);
     if (callback)
         lv_obj_add_event_cb(button, callback, LV_EVENT_CLICKED, u);
@@ -238,7 +238,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_set_size(u->settings_menu[i], 200, 64);
         lv_obj_add_event_cb(u->settings_menu[i], settings_menu_select, LV_EVENT_CLICKED, u);
         lv_obj_t *label =
-            demo_text(u, u->settings_menu[i], 12, 0, menu_ids[i], &lv_font_montserrat_20, 0xedf5f8);
+            demo_text(u, u->settings_menu[i], 12, 0, menu_ids[i], &lv_font_montserrat_16, 0xedf5f8);
         lv_label_set_long_mode(label, LV_LABEL_LONG_SCROLL_CIRCULAR);
         lv_obj_set_width(label, 176);
         lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
@@ -339,7 +339,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_pos(side_system, 0, 0);
     lv_obj_set_size(side_system, 200, 64);
     lv_obj_t *system_label =
-        demo_text(u, side_system, 18, 0, DEMO_TXT_USER_SETTINGS, &lv_font_montserrat_20, 0xedf5f8);
+        demo_text(u, side_system, 18, 0, DEMO_TXT_USER_SETTINGS, &lv_font_montserrat_16, 0xedf5f8);
     lv_obj_set_width(system_label, 176);
     lv_label_set_long_mode(system_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(system_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -349,7 +349,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_pos(side_advanced, 0, 64);
     lv_obj_set_size(side_advanced, 200, 64);
     lv_obj_t *side_label =
-        demo_text(u, side_advanced, 18, 0, DEMO_TXT_ADMIN_SETTINGS, &lv_font_montserrat_20, 0xffffff);
+        demo_text(u, side_advanced, 18, 0, DEMO_TXT_ADMIN_SETTINGS, &lv_font_montserrat_16, 0xffffff);
     lv_obj_set_width(side_label, 176);
     lv_label_set_long_mode(side_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
     lv_obj_set_style_text_align(side_label, LV_TEXT_ALIGN_CENTER, 0);
