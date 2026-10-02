@@ -38,5 +38,19 @@ class SourceDigestTest(unittest.TestCase):
             self.assertNotEqual(original, source_digest(root))
 
 
+    def test_build_artifacts_do_not_change_the_digest(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'ui').mkdir()
+            (root / 'ui/a.c').write_bytes(b'source')
+            original = source_digest(root)
+            # 构建残留（对象文件与字节码）不是源码，进出源码树都不得改变证据。
+            (root / 'ui/a.o').write_bytes(b'object')
+            (root / 'ui/libmeter.a').write_bytes(b'archive')
+            (root / 'ui/__pycache__').mkdir()
+            (root / 'ui/__pycache__/a.cpython-313.pyc').write_bytes(b'bytecode')
+            self.assertEqual(original, source_digest(root))
+
+
 if __name__ == '__main__':
     unittest.main()

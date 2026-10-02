@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 /build*/
+# 目标对象只应出现在 SDK 的 output/ 下；这里的规则用于挡住历史构建残留。
+*.o
+*.a

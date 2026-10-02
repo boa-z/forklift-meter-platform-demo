@@ -12,6 +12,9 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIRS = ('application', 'assets', 'catalog', 'generated', 'product',
                'protocol', 'services', 'sim', 'ui')
+# 摘要只覆盖源码：对象文件与字节码进出源码树不应改变证据，否则构建残留会伪装成源码变更。
+BUILD_ARTIFACT_SUFFIXES = ('.o', '.a', '.pyc')
+BUILD_ARTIFACT_DIRS = ('__pycache__', '.pytest_cache')
 
 
 def digest(path):
@@ -21,7 +24,9 @@ def digest(path):
 def source_digest(root, directories=SOURCE_DIRS):
     result = hashlib.sha256()
     # Path 在 Windows 按大小写不敏感排序；摘要统一使用 POSIX 字符串顺序。
-    files = (p for name in directories for p in (root / name).rglob('*') if p.is_file())
+    files = (p for name in directories for p in (root / name).rglob('*')
+             if p.is_file() and p.suffix not in BUILD_ARTIFACT_SUFFIXES
+             and not any(part in BUILD_ARTIFACT_DIRS for part in p.parts))
     for path in sorted(files, key=lambda p: p.relative_to(root).as_posix()):
         result.update(path.relative_to(root).as_posix().encode('utf-8') + b'\0')
         result.update(path.read_bytes())
