@@ -25,6 +25,20 @@ enum
     DEMO_MONITORS_PER_PAGE = DEMO_LIST_CAPACITY,
     DEMO_FAULTS_PER_PAGE = DEMO_LIST_CAPACITY
 };
+/* 设置页的卡片：用户偏好与密码与管理员与版本信息，外加用户设置的第二页（对时轮盘）。 */
+enum
+{
+    DEMO_SETTINGS_CARD_USER = 0,
+    DEMO_SETTINGS_CARD_PASSWORD = 1,
+    DEMO_SETTINGS_CARD_ADMIN = 2,
+    DEMO_SETTINGS_CARD_VERSION = 3,
+    DEMO_SETTINGS_CARD_CLOCK = 4,
+    DEMO_SETTINGS_CARDS = 5
+};
+/* 用户设置的分页数：第 1 页是偏好，第 2 页只有"时钟"这一条目。管理员页只有一页。 */
+enum { DEMO_USER_SETTINGS_PAGES = 2, DEMO_CAN_RATE_OPTIONS = 3 };
+/* 详情页当前承载哪一项：0..3 是用户偏好条目，4.. 是管理员条目，最后是对时轮盘。 */
+enum { DEMO_SETTING_CLOCK = 4 + DEMO_ADMIN_COUNT };
 /* 翻页只属于 Demo 展示层，不改变快照内容或向 App 发送动作。 */
 typedef struct
 {
@@ -54,11 +68,18 @@ typedef struct
     bool parameter_mode;
     unsigned selected_parameter;
     lv_obj_t *unit_button, *language_button, *brightness, *limit, *setting_status;
-    lv_obj_t *settings_title, *settings_note, *settings_rail, *settings_menu[4], *settings_cards[4],
-        *version_labels[4], *version_values[4], *version_entry, *version_back, *settings_detail,
-        *settings_detail_title, *settings_detail_back, *settings_detail_value, *admin_detail_button;
+    lv_obj_t *settings_title, *settings_note, *settings_rail, *settings_menu[2],
+        *settings_cards[DEMO_SETTINGS_CARDS], *version_labels[4], *version_values[4], *version_entry,
+        *version_back, *settings_detail, *settings_detail_title, *settings_detail_back,
+        *settings_detail_value, *admin_detail_button;
+    /* CAN 波特率单选：三项同时可见，只有当前值处于 CHECKED。 */
+    lv_obj_t *rate_buttons[DEMO_CAN_RATE_OPTIONS];
     lv_obj_t *setting_entries[4], *setting_values[4];
-    unsigned settings_tab, selected_setting;
+    /* 用户设置第二页只有一行"时钟"；点进详情页才是六个轮盘的对时界面。 */
+    lv_obj_t *clock_entry, *clock_value;
+    lv_obj_t *clock_group, *clock_rollers[DEMO_CLOCK_FIELDS];
+    bool clock_syncing;
+    unsigned settings_tab, settings_subpage, selected_setting;
     bool version_open, admin_navigation_pending;
     lv_obj_t *user_password, *admin_password, *user_password_button, *admin_password_button, *password_editor,
         *password_editor_title, *password_keyboard, *password_status, *admin_items[4], *admin_value_labels[4],

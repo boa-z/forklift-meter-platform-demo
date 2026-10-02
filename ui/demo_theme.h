@@ -10,4 +10,6 @@ void demo_theme_menu_button(lv_obj_t *button, bool selected);
 void demo_theme_list_row(lv_obj_t *row);
 void demo_theme_slider(lv_obj_t *slider);
 void demo_theme_keyboard(lv_obj_t *keyboard);
+/* 对时轮盘：深色底、居中选中行用主色，与其它控件的状态色一致。 */
+void demo_theme_roller(lv_obj_t *roller);
 #endif

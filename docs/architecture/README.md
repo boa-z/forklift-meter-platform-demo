@@ -39,6 +39,12 @@ Transmit DBC cycle time is 100 ms. The Demo has no vehicle-control command route
 
 The UI is native LVGL. Fonts and icons remain Product resources with checked-in generation metadata. Add translated text and regenerate the font subset before changing a screen; do not substitute a full-screen design image. Actual rendered output is in the [gallery](../ui/screenshots.md).
 
+## Wall clock and local time
+
+The header clock reads the Framework wall-clock contract instead of an uptime counter. The contract yields UTC; this Product applies a documented East-8 offset and renders 24-hour `HH:MM`, so no extra translated string or font subset is needed. A missing source, a failed read or an out-of-range sample renders `--:--` rather than a fabricated time.
+
+`sim/main.c` binds a fixed writable source so the gallery and the host tests stay reproducible byte for byte, while firmware builds receive the real on-chip RTC from the Framework platform port. The administrator page carries a Clock row that opens the shared numeric editor and writes back through the same contract: it keeps the entered hour and minute, and reuses the current date whenever the clock is already trustworthy.
+
 ## Compatibility
 
 Build against the Framework revision recorded in screenshot evidence and the consuming gitlink. This repository alone has no SDK toolchain or board configuration. Generic fixes go to Framework; customer extensions belong in a separate private Product. See [build](../build/README.md).

@@ -46,7 +46,10 @@ static int check_layout(lv_obj_t *parent)
                     (int)bounds.x2, (int)bounds.y2);
             return 1;
         }
-        CHECK(check_layout(child) == 0);
+        /* 轮盘内部承载全部选项的标签按设计高于控件、由控件裁剪，
+           因此只校验轮盘自身是否越界，不把它的内部标签当作溢出。 */
+        if (!lv_obj_check_type(child, &lv_roller_class))
+            CHECK(check_layout(child) == 0);
     }
     return 0;
 }
@@ -56,8 +59,11 @@ static int check_rows(demo_ui_t *ui, unsigned page, unsigned subpage)
     unsigned capacity = page == DEMO_MONITOR ? DEMO_MONITORS_PER_PAGE : DEMO_FAULTS_PER_PAGE;
     if (page == DEMO_SETTINGS)
     {
-        for (unsigned i = 0; i < 4; ++i)
-            CHECK(lv_obj_is_hidden(ui->settings_cards[i]) == (i != (subpage == 1 ? 1u : 0u)));
+        /* 用户设置第 1 页是偏好卡片，第 2 页是对时轮盘卡片。 */
+        const unsigned visible = subpage == 1 ? (unsigned)DEMO_SETTINGS_CARD_CLOCK
+                                              : (unsigned)DEMO_SETTINGS_CARD_USER;
+        for (unsigned i = 0; i < DEMO_SETTINGS_CARDS; ++i)
+            CHECK(lv_obj_is_hidden(ui->settings_cards[i]) == (i != visible));
         return 0;
     }
     for (size_t i = 0; i < slots; ++i)
@@ -192,8 +198,9 @@ int main(int argc, char **argv)
             for (unsigned page = DEMO_MONITOR; page <= DEMO_SETTINGS; ++page)
             {
                 demo_pager_t *pager = pagers[page - DEMO_MONITOR];
+                /* 设置页的子页数取决于标签页：用户设置两页（偏好 + 对时轮盘），管理员页一页。 */
                 unsigned expected_count =
-                    page == DEMO_SETTINGS ? 1u
+                    page == DEMO_SETTINGS ? (unsigned)DEMO_USER_SETTINGS_PAGES
                     : page == DEMO_MONITOR
                         ? (DEMO_MONITOR_SLOTS + DEMO_MONITORS_PER_PAGE - 1) / DEMO_MONITORS_PER_PAGE
                         : (DEMO_FAULT_SLOTS + DEMO_FAULTS_PER_PAGE - 1) / DEMO_FAULTS_PER_PAGE;

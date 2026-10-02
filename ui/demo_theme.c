@@ -74,3 +74,16 @@ void demo_theme_keyboard(lv_obj_t *keyboard)
     lv_obj_set_style_text_font(keyboard, &lv_font_montserrat_20, LV_PART_ITEMS);
     lv_obj_set_style_bg_color(keyboard, lv_color_hex(0xff7a00), LV_PART_ITEMS | LV_STATE_PRESSED);
 }
+
+void demo_theme_roller(lv_obj_t *roller)
+{
+    lv_obj_set_style_bg_color(roller, lv_color_hex(0x11161b), LV_PART_MAIN);
+    lv_obj_set_style_border_color(roller, lv_color_hex(0x34404a), LV_PART_MAIN);
+    lv_obj_set_style_border_width(roller, 1, LV_PART_MAIN);
+    lv_obj_set_style_radius(roller, 8, LV_PART_MAIN);
+    lv_obj_set_style_text_color(roller, style.text, LV_PART_MAIN);
+    lv_obj_set_style_text_font(roller, &lv_font_montserrat_20, LV_PART_MAIN);
+    /* 选中行用主色：轮盘的"当前值"必须一眼可见。 */
+    lv_obj_set_style_bg_color(roller, lv_color_hex(0xff7a00), LV_PART_SELECTED);
+    lv_obj_set_style_text_color(roller, lv_color_hex(0x11161b), LV_PART_SELECTED);
+}

@@ -1,4 +1,5 @@
 #include "platform/host/host_platform.h"
+#include "contracts/meter_wall_clock.h"
 #include "product/demo_storage.h"
 #include "product/product.h"
 #include "runtime/meter_runtime.h"
@@ -20,6 +21,23 @@ typedef struct
     const meter_product_t *product;
     meter_host_nvm_t *nvm;
 } action_context_t;
+/* 主机没有硬件 RTC，也不该读到宿主机时间：截图与断言需要逐帧可复现。
+   固定在 2026-10-01T00:30Z，经 Product 的东八区偏移即顶栏 08:30。
+   可写，用来覆盖对时流程；固件侧由 framework 的 RTC 端口绑定真实设备。 */
+static meter_wall_time_t sim_utc = {2026u, 10u, 1u, 0u, 30u, 0u, true};
+static bool sim_clock_read(meter_wall_time_t *out, void *context)
+{
+    (void)context;
+    *out = sim_utc;
+    return true;
+}
+static bool sim_clock_write(const meter_wall_time_t *utc, void *context)
+{
+    (void)context;
+    sim_utc = *utc;
+    sim_utc.valid = true;
+    return true;
+}
 static bool action(void *context, const meter_action_t *a)
 {
     action_context_t *c = context;
@@ -177,6 +195,8 @@ int main(int argc, char **argv)
         return 5;
     if (!demo_i18n_init())
         return 5;
+    meter_wall_clock_bind(sim_clock_read, NULL);
+    meter_wall_clock_bind_set(sim_clock_write, NULL);
     if (!meter_host_open(hidden))
     {
         fprintf(stderr, "SDL display initialization failed\n");
@@ -204,6 +224,9 @@ int main(int argc, char **argv)
             meter_host_click(100 + (int)page * 195, 450, n == 4);
         if (subpage && (n == 12 || n == 15))
             meter_host_click(750, 75, n == 12);
+        /* 设置页第 2 页只有"时钟"条目；再点一次才进入六个轮盘的对时界面。 */
+        if (page == 3 && subpage && (n == 20 || n == 23))
+            meter_host_click(400, 135, n == 20);
         if (smoke)
         {
             if (n == 20 || n == 23)

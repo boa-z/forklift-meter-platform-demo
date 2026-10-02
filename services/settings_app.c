@@ -59,6 +59,64 @@ bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *acti
         auth_feedback = accepted ? DEMO_FEEDBACK_APPLIED : DEMO_FEEDBACK_DENIED;
         return accepted;
     }
+    /* 对时属于用户设置，不要求管理员权限；它写的是本机时钟而不是域信号。 */
+    if (action->id >= DEMO_INTENT_CLOCK_FIRST && action->id < DEMO_INTENT_CLOCK_FIRST + DEMO_CLOCK_FIELDS)
+    {
+        const unsigned field = action->id - DEMO_INTENT_CLOCK_FIRST;
+        const float raw = action->value;
+        if (!(raw >= 0.0f) || raw > 9999.0f || floorf(raw) != raw)
+            return false;
+        /* 以当前读数为基准只替换一个字段：有可信读数就用它，否则用固定基准日。
+           字段逐个落盘，所以每一次提交本身都是一个自洽的完整时刻。 */
+        meter_wall_time_t local;
+        (void)demo_clock_fields(&local);
+        const unsigned value = (unsigned)raw;
+        switch ((demo_clock_field_t)field)
+        {
+        case DEMO_CLOCK_YEAR:
+            /* 下界高于驱动纪元哨兵：d13x 的 set_secs 会整体拒掉更早的读数。 */
+            if (value < 2021u || value > 2099u)
+                return false;
+            local.year = (uint16_t)value;
+            break;
+        case DEMO_CLOCK_MONTH:
+            if (value < 1u || value > 12u)
+                return false;
+            local.month = (uint8_t)value;
+            break;
+        case DEMO_CLOCK_DAY:
+            if (value < 1u || value > 31u)
+                return false;
+            local.day = (uint8_t)value;
+            break;
+        case DEMO_CLOCK_HOUR:
+            if (value > 23u)
+                return false;
+            local.hour = (uint8_t)value;
+            break;
+        case DEMO_CLOCK_MINUTE:
+            if (value > 59u)
+                return false;
+            local.minute = (uint8_t)value;
+            break;
+        case DEMO_CLOCK_SECOND:
+            if (value > 59u)
+                return false;
+            local.second = (uint8_t)value;
+            break;
+        default:
+            return false;
+        }
+        /* 月长与闰年由公共层判定：非法日期（如 2 月 30 日）零偏移往返后会被归一化成别的日子。 */
+        meter_wall_time_t roundtrip;
+        if (!meter_wall_time_shift(&local, 0, &roundtrip) || roundtrip.year != local.year ||
+            roundtrip.month != local.month || roundtrip.day != local.day)
+            return false;
+        meter_wall_time_t utc;
+        /* 界面编辑的是本地时间，写回要按同一偏移换算回 UTC。 */
+        return meter_wall_time_shift(&local, -DEMO_UTC_OFFSET_SECONDS, &utc) &&
+               meter_wall_clock_write(&utc);
+    }
     if (!meter_authorization_allows(&grant, ADMIN_PERMISSION, now_ms))
     {
         auth_feedback = DEMO_FEEDBACK_DENIED;

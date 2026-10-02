@@ -127,9 +127,9 @@ void demo_ui_present(void *context, const meter_snapshot_t *snapshot, uint32_t e
     strcpy(u->connection_text, demo_i18n_text(state));
     lv_label_set_text_static(u->connection, u->connection_text);
     meter_i18n_apply_font(u->connection, u->view.language, METER_FONT_LABEL);
-    uint32_t sec = lv_tick_get() / 1000;
-    lv_snprintf(u->clock_text, sizeof(u->clock_text), "%02u:%02u", (unsigned)(sec / 60 % 60),
-                (unsigned)(sec % 60));
+    /* 顶栏时钟取真实墙上时钟，不再用 lv_tick_get() 伪造运行时长：
+       后者在实板上会被误读成当前时间，且与 RTC 无任何关系。 */
+    (void)demo_clock_text(u->clock_text, sizeof(u->clock_text));
     lv_label_set_text_static(u->clock, u->clock_text);
     demo_dashboard_update(u);
     demo_monitor_update(u);

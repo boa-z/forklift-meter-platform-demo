@@ -11,12 +11,12 @@ Follow the [build guide](../build/README.md) and run the complete consuming Fram
 | `dbc-generation`, `demo-pdo-dbc`, `can-replay` | Generated decoder and synthetic wire contracts |
 | `catalog`, `fonts`, `assets` | Definitions, translated glyph coverage, source pins and exact resource hashes |
 | `demo-settings-app`, `product-presentation` | Settings intents and projection |
-| `ui-pagination`, `i18n-ui`, `ui-fixtures`, `demo-scenarios`, `sdl-smoke` | Navigation, two languages, states and deterministic host paths |
+| `ui-pagination`, `i18n-ui`, `clock-ui`, `ui-fixtures`, `demo-scenarios`, `sdl-smoke` | Navigation, two languages, wall-clock rendering, states and deterministic host paths |
 | `demo-docs-sync`, `demo-docs-evidence` | Bilingual structure, local links and source-bound screenshots |
 
 ## Screenshot evidence
 
-The [gallery](../ui/screenshots.md) is generated from the real executable. Its [manifest](../ui/screenshots/manifest.json) records sixteen 800×480 images, capture arguments, source digests, executable SHA256 and simulator reports. All cases require PASS, requested language/page/frame count and stable object count. The exporter verifies lossless RGB conversion.
+The [gallery](../ui/screenshots.md) is generated from the real executable. Its [manifest](../ui/screenshots/manifest.json) records eighteen 800×480 images, capture arguments, source digests, executable SHA256 and simulator reports. All cases require PASS, requested language/page/frame count and stable object count. The exporter verifies lossless RGB conversion.
 
 The checked-in image checker uses Python's standard library; Pillow is needed only to regenerate screenshots. `.gitattributes` pins LF text checkout so Windows line-ending conversion cannot invalidate generated font and SVG source hashes. Never refresh hash baselines merely to hide unexpected changes.
 

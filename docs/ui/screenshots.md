@@ -32,6 +32,14 @@ Normal pages use `--visual mid`; abnormal cases use their named synthetic scenar
 
 ![settings-zh-CN](screenshots/settings-zh-CN.png)
 
+## Clock setting
+
+User settings has a second page whose only entry is the clock; opening it shows the six-column roller. The capture above therefore turns the settings pager and then activates that entry.
+
+![settings-clock-en](screenshots/settings-clock-en.png)
+
+![settings-clock-zh-CN](screenshots/settings-clock-zh-CN.png)
+
 ## Abnormal states
 
 ![dashboard-warning-zh-CN](screenshots/dashboard-warning-zh-CN.png)

@@ -23,6 +23,8 @@ static const demo_text_id_t setting_titles[] = {
     DEMO_TXT_SPEED_UNITS, DEMO_TXT_LANGUAGE,   DEMO_TXT_BRIGHTNESS,    DEMO_TXT_SPEED_LIMIT,
     DEMO_TXT_CAN_RATE,    DEMO_TXT_HOUR_METER, DEMO_TXT_SPEED_DISPLAY, DEMO_TXT_MODE_MEMORY};
 
+/* 对时轮盘按当前读数铺一次；实现放在下方，详情页打开时要调用它。 */
+static void clock_sync(demo_ui_t *u);
 static void settings_detail_close(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
@@ -33,20 +35,32 @@ static void settings_detail_open(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     lv_obj_t *target = lv_event_get_target_obj(event);
-    unsigned selected = 4 + DEMO_ADMIN_COUNT;
+    unsigned selected = DEMO_SETTING_CLOCK + 1u; /* 未匹配任何已注册条目 */
     for (unsigned i = 0; i < 4; ++i)
         if (target == u->setting_entries[i])
             selected = i;
     for (unsigned i = 0; i < DEMO_ADMIN_COUNT; ++i)
         if (target == u->admin_items[i] && u->view.admin_authorized)
             selected = 4 + i;
-    if (selected >= 4 + DEMO_ADMIN_COUNT)
+    if (target == u->clock_entry)
+        selected = DEMO_SETTING_CLOCK;
+    if (selected > DEMO_SETTING_CLOCK)
         return;
     u->selected_setting = selected;
     lv_obj_t *controls[] = {u->unit_button, u->language_button, u->brightness, u->limit};
     for (unsigned i = 0; i < 4; ++i)
         lv_obj_set_hidden(controls[i], i != selected);
-    lv_obj_set_hidden(u->admin_detail_button, selected < 4);
+    /* CAN 波特率行用自己的单选组，其余管理员行仍用循环切换按钮。 */
+    const bool admin_row = selected >= 4u && selected < DEMO_SETTING_CLOCK;
+    const bool rate_row = admin_row && selected == 4u;
+    lv_obj_set_hidden(u->admin_detail_button, !admin_row || rate_row);
+    for (unsigned i = 0; i < DEMO_CAN_RATE_OPTIONS; ++i)
+        lv_obj_set_hidden(u->rate_buttons[i], !rate_row);
+    /* 对时轮盘只在从"时钟"条目进来时出现，并在进入时按当前读数铺一次。 */
+    const bool clock_row = selected == DEMO_SETTING_CLOCK;
+    lv_obj_set_hidden(u->clock_group, !clock_row);
+    if (clock_row)
+        clock_sync(u);
     lv_obj_set_hidden(u->settings_detail, false);
     lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), true);
     demo_settings_update(u);
@@ -127,6 +141,83 @@ static void logout(lv_event_t *event)
     u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
     demo_editors_close(u);
 }
+/* 对时轮盘：六列的取值范围与显示位数。年下界高于驱动纪元哨兵，避免写入被整体拒掉。 */
+static const struct
+{
+    unsigned first, count, digits;
+} clock_specs[DEMO_CLOCK_FIELDS] = {{2021u, 79u, 4u}, {1u, 12u, 2u}, {1u, 31u, 2u},
+                                    {0u, 24u, 2u},    {0u, 60u, 2u}, {0u, 60u, 2u}};
+/* 单字母列标不参与翻译：轮盘本身只显示数字，因此不需要额外的可翻译文案或字体子集。 */
+static const char *const clock_labels[DEMO_CLOCK_FIELDS] = {"Y", "M", "D", "h", "m", "s"};
+/* 选项文本在启动时生成一次：零填充让每列宽度稳定，选中项不会左右跳动。 */
+static char clock_options[DEMO_CLOCK_FIELDS][400];
+
+static void fill_clock_options(void)
+{
+    for (unsigned field = 0; field < DEMO_CLOCK_FIELDS; ++field)
+    {
+        const unsigned first = clock_specs[field].first, count = clock_specs[field].count;
+        size_t used = 0u;
+        for (unsigned i = 0u; i < count; ++i)
+        {
+            const int written = lv_snprintf(clock_options[field] + used, sizeof(clock_options[field]) - used,
+                                            "%0*u%s", (int)clock_specs[field].digits, first + i,
+                                            i + 1u < count ? "\n" : "");
+            if (written < 0 || (size_t)written >= sizeof(clock_options[field]) - used)
+                break;
+            used += (size_t)written;
+        }
+    }
+}
+/* 从当前读数（不可信时是固定基准日）铺一次轮盘。
+   lv_roller_set_selected 目前不发 VALUE_CHANGED，但这里仍然加抑制位：对时页写的是
+   设备时钟，将来若把轮盘绑到 subject 或换用会回发的设置接口，不能让它自己喂自己。 */
+static void clock_sync(demo_ui_t *u)
+{
+    meter_wall_time_t local;
+    (void)demo_clock_fields(&local);
+    const unsigned values[DEMO_CLOCK_FIELDS] = {local.year, local.month, local.day,
+                                                local.hour, local.minute, local.second};
+    u->clock_syncing = true;
+    for (unsigned field = 0u; field < DEMO_CLOCK_FIELDS; ++field)
+    {
+        const unsigned first = clock_specs[field].first;
+        const unsigned index = values[field] >= first && values[field] < first + clock_specs[field].count
+                                   ? values[field] - first
+                                   : 0u;
+        lv_roller_set_selected(u->clock_rollers[field], index, LV_ANIM_OFF);
+    }
+    u->clock_syncing = false;
+}
+/* 轮盘停在哪一格就提交哪个字段：一次手势一个意图，符合本框架"UI 提交已复制意图"的模型。 */
+static void clock_roll(lv_event_t *event)
+{
+    demo_ui_t *u = lv_event_get_user_data(event);
+    if (u->clock_syncing || lv_event_get_code(event) != LV_EVENT_VALUE_CHANGED)
+        return;
+    lv_obj_t *target = lv_event_get_target_obj(event);
+    for (unsigned field = 0u; field < DEMO_CLOCK_FIELDS; ++field)
+    {
+        if (target != u->clock_rollers[field])
+            continue;
+        const float value = (float)(clock_specs[field].first + lv_roller_get_selected(target));
+        meter_action_t intent = demo_clock_intent((demo_clock_field_t)field, value);
+        u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
+    }
+}
+/* CAN 波特率单选：三项常驻可见，只有当前值处于 CHECKED。 */
+static void rate_select(lv_event_t *event)
+{
+    demo_ui_t *u = lv_event_get_user_data(event);
+    if (!u->view.admin_authorized)
+        return;
+    for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
+        if (lv_event_get_target_obj(event) == u->rate_buttons[i])
+        {
+            meter_action_t intent = demo_admin_intent(0, (float)i);
+            u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
+        }
+}
 static void admin_change(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
@@ -139,23 +230,34 @@ static void admin_change(lv_event_t *event)
     meter_action_t intent = demo_admin_intent(i, (float)value);
     u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
 }
+/* 当前标签页该显示哪张卡片；用户设置的第二页只有"时钟"这一条目。 */
+static void settings_show_card(demo_ui_t *u)
+{
+    unsigned card = DEMO_SETTINGS_CARD_USER;
+    if (u->settings_tab == 1u)
+        card = DEMO_SETTINGS_CARD_ADMIN;
+    else if (u->settings_subpage == 1u)
+        card = DEMO_SETTINGS_CARD_CLOCK;
+    for (unsigned i = 0u; i < DEMO_SETTINGS_CARDS; ++i)
+        lv_obj_set_hidden(u->settings_cards[i], i != card);
+}
 void demo_settings_show_page(demo_ui_t *u, unsigned page)
 {
     if (page >= 2)
         return;
     demo_editors_close(u);
     u->settings_tab = page;
+    u->settings_subpage = 0u;
     u->admin_navigation_pending = false;
     lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), false);
     u->version_open = false;
     lv_obj_set_hidden(u->version_back, true);
+    /* 用户设置有两页，管理员页只有一页；翻页额度随标签页切换。 */
+    u->settings_pager.count = page == 0u ? (unsigned)DEMO_USER_SETTINGS_PAGES : 1u;
     (void)demo_pager_select(&u->settings_pager, 0);
-    for (unsigned i = 0; i < 4; ++i)
-    {
-        lv_obj_set_hidden(u->settings_cards[i], i != (page == 1 ? 2 : page));
-        if (i < 2)
-            demo_theme_menu_button(u->settings_menu[i], i == page);
-    }
+    settings_show_card(u);
+    for (unsigned i = 0; i < 2; ++i)
+        demo_theme_menu_button(u->settings_menu[i], i == page);
 }
 static void settings_menu_select(lv_event_t *event)
 {
@@ -180,15 +282,20 @@ static void settings_menu_select(lv_event_t *event)
 static void turn_page(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
-    (void)demo_pager_select(&u->settings_pager, demo_pager_target(&u->settings_pager, event));
+    if (!demo_pager_select(&u->settings_pager, demo_pager_target(&u->settings_pager, event)))
+        return;
+    /* 只有用户设置分页；管理员页 count 为 1，翻页不会生效。 */
+    if (u->settings_tab == 0u)
+        u->settings_subpage = u->settings_pager.current;
+    settings_show_card(u);
 }
 static void version_open(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     u->version_open = true;
     lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), true);
-    for (unsigned i = 0; i < 4; ++i)
-        lv_obj_set_hidden(u->settings_cards[i], i != 3);
+    for (unsigned i = 0; i < DEMO_SETTINGS_CARDS; ++i)
+        lv_obj_set_hidden(u->settings_cards[i], i != DEMO_SETTINGS_CARD_VERSION);
     lv_label_set_text(u->settings_title, demo_i18n_text(DEMO_TXT_INSTRUMENT_VERSION));
     lv_obj_set_hidden(u->version_back, false);
 }
@@ -244,7 +351,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
         lv_obj_center(label);
     }
-    for (unsigned i = 0; i < 4; ++i)
+    for (unsigned i = 0; i < DEMO_SETTINGS_CARDS; ++i)
     {
         u->settings_cards[i] = lv_obj_create(p);
         lv_obj_remove_style_all(u->settings_cards[i]);
@@ -301,6 +408,20 @@ void demo_settings_create(demo_ui_t *u)
     u->language_button = settings_button(u, u->settings_detail, 166, 160, DEMO_TXT_CHINESE, action);
     u->admin_detail_button =
         settings_button(u, u->settings_detail, 166, 160, DEMO_TXT_EDIT_VALUE, admin_change);
+    /* CAN 波特率单选：三项并排常驻，文案就是速率本身，不参与翻译。 */
+    static const char *const rate_labels[DEMO_CAN_RATE_OPTIONS] = {"125 kbit/s", "250 kbit/s", "500 kbit/s"};
+    for (unsigned i = 0; i < DEMO_CAN_RATE_OPTIONS; ++i)
+    {
+        lv_obj_t *button = lv_button_create(u->settings_detail);
+        demo_theme_button(button);
+        lv_obj_set_pos(button, 20 + (int)i * 186, 160);
+        lv_obj_set_size(button, 170, 48);
+        lv_obj_t *label = meter_text(button, 0, 0, rate_labels[i], &lv_font_montserrat_16, 0xedf5f8);
+        lv_obj_center(label);
+        lv_obj_add_event_cb(button, rate_select, LV_EVENT_CLICKED, u);
+        lv_obj_set_hidden(button, true);
+        u->rate_buttons[i] = button;
+    }
     u->brightness = lv_slider_create(u->settings_detail);
     u->limit = lv_slider_create(u->settings_detail);
     lv_obj_t *sliders[] = {u->brightness, u->limit};
@@ -440,9 +561,46 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_center(version_back_label);
     lv_obj_add_event_cb(u->version_back, version_close, LV_EVENT_CLICKED, u);
     lv_obj_set_hidden(u->version_back, true);
+    /* 用户设置第二页：只有"时钟"这一条目；点进去才是六个轮盘的对时界面。 */
+    fill_clock_options();
+    lv_obj_t *clock_card = u->settings_cards[DEMO_SETTINGS_CARD_CLOCK];
+    u->clock_entry = settings_button(u, clock_card, 0, 0, DEMO_TXT_CLOCK_SET, settings_detail_open);
+    lv_obj_set_size(u->clock_entry, 584, DEMO_LIST_HEIGHT);
+    lv_obj_t *clock_name = lv_obj_get_child(u->clock_entry, 0);
+    lv_obj_set_width(clock_name, 280);
+    lv_label_set_long_mode(clock_name, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(clock_name, LV_ALIGN_LEFT_MID, 18, 0);
+    u->clock_value = meter_text(u->clock_entry, 0, 0, "", &lv_font_montserrat_20, 0xedf5f8);
+    lv_obj_set_width(u->clock_value, 236);
+    lv_obj_set_style_text_align(u->clock_value, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_obj_align(u->clock_value, LV_ALIGN_RIGHT_MID, -30, 0);
+    /* 对时轮盘归详情页所有：从"时钟"条目进入才显示，六列依次是年月日时分秒。 */
+    u->clock_group = lv_obj_create(u->settings_detail);
+    lv_obj_remove_style_all(u->clock_group);
+    lv_obj_set_pos(u->clock_group, 0, 0);
+    lv_obj_set_size(u->clock_group, 600, 372);
+    lv_obj_set_scrollable(u->clock_group, false);
+    for (unsigned field = 0; field < DEMO_CLOCK_FIELDS; ++field)
+    {
+        /* 列标只用单字母：轮盘本身显示数字，因此不需要额外的可翻译文案或字体子集。 */
+        lv_obj_t *caption = meter_text(u->clock_group, 20 + (int)field * 92, 118, clock_labels[field],
+                                       &lv_font_montserrat_16, 0x8ba9bb);
+        lv_obj_set_width(caption, 84);
+        lv_obj_set_style_text_align(caption, LV_TEXT_ALIGN_CENTER, 0);
+        lv_obj_t *roller = lv_roller_create(u->clock_group);
+        demo_theme_roller(roller);
+        lv_roller_set_options(roller, clock_options[field], LV_ROLLER_MODE_NORMAL);
+        /* 三行刚好放下上一项、当前项、下一项；高度由行数决定，避免半行字形被裁掉。 */
+        lv_roller_set_visible_row_count(roller, 3);
+        lv_obj_set_pos(roller, 20 + (int)field * 92, 142);
+        lv_obj_set_width(roller, 84);
+        lv_obj_add_event_cb(roller, clock_roll, LV_EVENT_VALUE_CHANGED, u);
+        u->clock_rollers[field] = roller;
+    }
+    lv_obj_set_hidden(u->clock_group, true);
     u->setting_status = meter_text(u->root, 218, 393, "", &lv_font_montserrat_16, 0xff856d);
 
-    demo_pager_create(p, &u->settings_pager, 1, turn_page, u);
+    demo_pager_create(p, &u->settings_pager, (unsigned)DEMO_USER_SETTINGS_PAGES, turn_page, u);
     lv_obj_move_foreground(u->settings_detail);
     demo_settings_show_page(u, 0);
 }
@@ -459,7 +617,16 @@ void demo_settings_update(demo_ui_t *u)
     }
     if (!u->view.admin_authorized && u->settings_tab == 1)
         demo_settings_show_page(u, 0);
-    lv_label_set_text(u->settings_title, u->version_open ? demo_i18n_text(DEMO_TXT_INSTRUMENT_VERSION) : "");
+    /* 标题只在版本页与用户设置第二页（对时）有意义；其余页面留空，避免与列表标题重复。 */
+    const bool clock_page = !u->version_open && u->settings_tab == 0u && u->settings_subpage == 1u;
+    lv_label_set_text(u->settings_title,
+                      u->version_open  ? demo_i18n_text(DEMO_TXT_INSTRUMENT_VERSION)
+                      : clock_page     ? demo_i18n_text(DEMO_TXT_CLOCK_SET)
+                                       : "");
+    /* 第二页的"时钟"条目显示当前本地时间；读数不可信时是占位符而不是 00:00。 */
+    char clock_buffer[8];
+    (void)demo_clock_text(clock_buffer, sizeof(clock_buffer));
+    lv_label_set_text(u->clock_value, clock_buffer);
     lv_label_set_text(lv_obj_get_child(u->unit_button, 0),
                       demo_i18n_text(u->view.imperial ? DEMO_TXT_METRIC : DEMO_TXT_IMPERIAL));
     lv_label_set_text(
@@ -488,6 +655,9 @@ void demo_settings_update(demo_ui_t *u)
                                     : demo_i18n_text(value ? DEMO_TXT_REMEMBER : DEMO_TXT_RESET_MODE);
         lv_label_set_text(u->admin_value_labels[i], text);
     }
+    /* CAN 波特率单选：文案就是速率本身，只有当前值处于 CHECKED。 */
+    for (unsigned i = 0; i < DEMO_CAN_RATE_OPTIONS; ++i)
+        lv_obj_set_state(u->rate_buttons[i], LV_STATE_CHECKED, u->view.admin_values[0] == i);
     lv_label_set_text(u->version_values[0], u->view.firmware_version ? u->view.firmware_version
                                                                      : demo_i18n_text(DEMO_TXT_HOST_BUILD));
     lv_label_set_text(u->version_values[1], "reference-demo");
@@ -507,7 +677,14 @@ void demo_settings_update(demo_ui_t *u)
         lv_label_set_text(u->setting_values[3], "--");
     for (unsigned i = 0; i < 4; ++i)
         lv_obj_set_style_text_font(u->setting_values[i], font, 0);
-    if (u->selected_setting < 4 + DEMO_ADMIN_COUNT)
+    lv_obj_set_style_text_font(u->clock_value, font, 0);
+    if (u->selected_setting == DEMO_SETTING_CLOCK)
+    {
+        /* 对时详情页：标题与当前值都用时钟这一项自己的文本。 */
+        lv_label_set_text(u->settings_detail_title, demo_i18n_text(DEMO_TXT_CLOCK_SET));
+        lv_label_set_text(u->settings_detail_value, lv_label_get_text(u->clock_value));
+    }
+    else if (u->selected_setting < 4 + DEMO_ADMIN_COUNT)
     {
         lv_label_set_text(u->settings_detail_title, demo_i18n_text(setting_titles[u->selected_setting]));
         lv_obj_t *value = u->selected_setting < 4 ? u->setting_values[u->selected_setting]

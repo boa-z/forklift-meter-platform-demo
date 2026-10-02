@@ -45,7 +45,7 @@ def main():
     for language, code in (('english', 'en'), ('chinese', 'zh-CN')):
         for name, page, subpage in (('dashboard', 0, 0), ('monitor', 1, 0),
                                     ('monitor-2', 1, 1), ('faults', 2, 0),
-                                    ('settings', 3, 0)):
+                                    ('settings', 3, 0), ('settings-clock', 3, 1)):
             cases.append((name + '-' + code, language, page, subpage, ['--visual', 'mid']))
     for scenario in ('warning', 'stale', 'unknown', 'error', 'offline'):
         cases.append(('dashboard-' + scenario + '-zh-CN', 'chinese', 0, 0, ['--scenario', scenario]))

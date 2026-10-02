@@ -1,8 +1,44 @@
 #include "application/presentation.h"
 #include "meter_build_identity.h"
+#include <stdio.h>
 #ifdef METER_ENABLE_CAN_UPDATE
 #include "meter_update_build.h"
 #endif
+/* 占位符与 "HH:MM" 同长，所以时钟盒在可用与不可用之间切换时不会重排顶栏。 */
+static const char clock_placeholder[] = "--:--";
+
+bool demo_clock_text(char *out, size_t size)
+{
+    if (!out || size < sizeof(clock_placeholder))
+        return false;
+    meter_wall_time_t utc, local;
+    /* 未绑定来源、来源失败或采样越界都落在这里：显示占位符而不是 1970 或 00:00。 */
+    if (!meter_wall_clock_read(&utc) || !meter_wall_time_shift(&utc, DEMO_UTC_OFFSET_SECONDS, &local))
+    {
+        for (size_t i = 0; i < sizeof(clock_placeholder); ++i)
+            out[i] = clock_placeholder[i];
+        return false;
+    }
+    /* 24 小时制：不引入 am/pm 文案，因此不需要额外的可翻译字符串或字体子集。 */
+    snprintf(out, size, "%02u:%02u", (unsigned)local.hour, (unsigned)local.minute);
+    return true;
+}
+
+bool demo_clock_fields(meter_wall_time_t *local_out)
+{
+    if (!local_out)
+        return false;
+    meter_wall_time_t utc, local;
+    if (meter_wall_clock_read(&utc) && meter_wall_time_shift(&utc, DEMO_UTC_OFFSET_SECONDS, &local))
+    {
+        *local_out = local;
+        return true;
+    }
+    /* 未对时的板子也要有一个可编辑的起点，否则对时页永远无法把时钟设起来。 */
+    *local_out = (meter_wall_time_t){(uint16_t)DEMO_CLOCK_BASE_YEAR, (uint8_t)DEMO_CLOCK_BASE_MONTH,
+                                     (uint8_t)DEMO_CLOCK_BASE_DAY, 0u, 0u, 0u, true};
+    return false;
+}
 static demo_readout_t readout(const meter_snapshot_t *snapshot, meter_signal_id_t id)
 {
     meter_value_t value = meter_snapshot_read(snapshot, id);
@@ -86,4 +122,8 @@ meter_action_t demo_remote_intent(unsigned row, float value)
 meter_action_t demo_admin_intent(unsigned row, float value)
 {
     return demo_settings_intent((demo_settings_intent_t)(DEMO_INTENT_ADMIN_FIRST + row), value);
+}
+meter_action_t demo_clock_intent(demo_clock_field_t field, float value)
+{
+    return demo_settings_intent((demo_settings_intent_t)(DEMO_INTENT_CLOCK_FIRST + (unsigned)field), value);
 }

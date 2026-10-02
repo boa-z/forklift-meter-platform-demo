@@ -32,6 +32,14 @@
 
 ![settings-zh-CN](screenshots/settings-zh-CN.png)
 
+## 时钟设置
+
+用户设置的第二页只有"时钟"这一条目，点进去就是六列轮盘。因此该用例先翻到设置第二页，再点开这个条目。
+
+![settings-clock-en](screenshots/settings-clock-en.png)
+
+![settings-clock-zh-CN](screenshots/settings-clock-zh-CN.png)
+
 ## 异常状态
 
 ![dashboard-warning-zh-CN](screenshots/dashboard-warning-zh-CN.png)

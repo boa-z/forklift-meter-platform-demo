@@ -6,6 +6,9 @@ import re
 import struct
 from capture_screenshots import ROOT, digest, source_digest
 
+# 图集用例数，必须与 tools/capture_screenshots.py 里的 cases 数量一致。
+EXPECTED_CAPTURES = 18
+
 
 def main():
     documents = [ROOT / 'README.md', ROOT / 'README.zh-CN.md', *(ROOT / 'docs').rglob('*.md')]
@@ -21,8 +24,8 @@ def main():
     if manifest['product_source_sha256'] != source_digest(ROOT):
         raise SystemExit('Product source changed: rebuild and regenerate SDL2 screenshots')
     cases = manifest['screenshots']
-    if len(cases) != 16 or len({case['file'] for case in cases}) != 16:
-        raise SystemExit('Expected sixteen unique documented SDL2 captures')
+    if len(cases) != EXPECTED_CAPTURES or len({case['file'] for case in cases}) != EXPECTED_CAPTURES:
+        raise SystemExit('Expected %d unique documented SDL2 captures' % EXPECTED_CAPTURES)
     for case in cases:
         path = folder / case['file']
         raw = path.read_bytes()
@@ -30,7 +33,7 @@ def main():
             raise SystemExit('Invalid PNG dimensions: ' + case['file'])
         if digest(path) != case['sha256'] or case['report']['result'] != 'PASS':
             raise SystemExit('Invalid screenshot evidence: ' + case['file'])
-    print('Product documentation links and 16 source-bound SDL2 screenshots PASS')
+    print('Product documentation links and %d source-bound SDL2 screenshots PASS' % EXPECTED_CAPTURES)
 
 
 if __name__ == '__main__':
