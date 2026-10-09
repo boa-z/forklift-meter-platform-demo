@@ -2,7 +2,7 @@
 
 > [English](screenshots.md)
 
-以下图片均由原生 LVGL 经过 SDL2 实际渲染，尺寸为 **800×480**，不是设计稿或整屏背景素材。参见[捕获命令](../build/README.zh-CN.md)及[机器可读来源记录](screenshots/manifest.json)。
+以下图片均由原生 LVGL 经过 SDL2 实际渲染，尺寸为 **800×480**，不是设计稿或整屏背景素材。参见[捕获命令](../build/README.zh-CN.md)。
 
 正常页面使用 `--visual mid`，异常用例使用各自命名的合成场景。每次捕获运行 180 帧。更新浮层仅预览 45% 下载进度，不是 OTA 安装。
 

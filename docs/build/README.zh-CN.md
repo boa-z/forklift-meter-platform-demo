@@ -35,14 +35,14 @@ Linux 去掉 `.exe`。交互模式打开 800×480 窗口，关闭窗口即可退
 
 ```text
 python -m pip install Pillow
-python products/demo/tools/capture_screenshots.py --framework-root . --binary build-demo/meter-demo.exe
+python products/demo/tools/capture_screenshots.py --binary build-demo/meter-demo.exe
 python tools/check_docs_sync.py --root products/demo
 python products/demo/tools/check_docs.py
 ```
 
-导出器使用 dummy 视频驱动运行十六个独立 SDL2 进程，将捕获的 BMP 像素转换为 PNG，不缩放、不重绘，并检查尺寸、页面、语言及模拟器状态。[清单](../ui/screenshots/manifest.json)保存命令、报告、可执行文件哈希、源码摘要和图片哈希。提交前逐张检查。
+导出器使用 dummy 视频驱动，为图集中的每张图片运行一个 SDL2 进程，将捕获的 BMP 像素转换为 PNG，不缩放、不重绘，并检查尺寸、页面、语言及模拟器状态。提交前逐张检查；UI 修改后重新导出。
 
-Base commit ID 表示捕获时检出的祖先提交；源码摘要描述实际被捕获的文件，包括未提交修改。源码摘要不匹配时必须重新构建和导出。清单是证据，不是固件密码学签名。
+
 
 ## 固件与 CAN OTA
 

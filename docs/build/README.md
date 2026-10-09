@@ -35,14 +35,14 @@ Build the current sources first. Use host Python with Pillow available and the S
 
 ```text
 python -m pip install Pillow
-python products/demo/tools/capture_screenshots.py --framework-root . --binary build-demo/meter-demo.exe
+python products/demo/tools/capture_screenshots.py --binary build-demo/meter-demo.exe
 python tools/check_docs_sync.py --root products/demo
 python products/demo/tools/check_docs.py
 ```
 
-The exporter runs sixteen independent SDL2 processes using the dummy video driver. It converts captured BMP pixels to PNG without resizing or redrawing and verifies dimensions, page, language and simulator status. It stores commands, reports, executable hash, source digest and image hashes in the [manifest](../ui/screenshots/manifest.json). Review every image before committing.
+The exporter runs one SDL2 process per gallery image using the dummy video driver. It converts captured BMP pixels to PNG without resizing or redrawing and verifies dimensions, page, language and simulator status. Review every image before committing, and re-export after a UI change.
 
-Base commit IDs identify checkout ancestry at capture time; source digests describe the actual captured files, including any uncommitted changes. A source digest mismatch requires rebuilding and exporting again. The manifest is evidence, not a cryptographic firmware signature.
+
 
 ## Firmware and CAN OTA
 

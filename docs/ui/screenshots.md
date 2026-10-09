@@ -2,7 +2,7 @@
 
 > [中文版](screenshots.zh-CN.md)
 
-All images below are captured from native LVGL rendering through SDL2 at **800×480**. They are not design mockups or full-screen background assets. See [capture commands](../build/README.md) and [machine-readable provenance](screenshots/manifest.json).
+All images below are captured from native LVGL rendering through SDL2 at **800×480**. They are not design mockups or full-screen background assets. See [capture commands](../build/README.md).
 
 Normal pages use `--visual mid`; abnormal cases use their named synthetic scenario. Each capture runs 180 frames. The update overlay is a 45% download preview, not an OTA installation.
 
