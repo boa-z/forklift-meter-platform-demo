@@ -68,9 +68,8 @@ static const meter_fault_def_t faults[] = {
     {10, "steering_advisory", "Steering angle advisory"},
 };
 const meter_catalog_t meter_demo_catalog = {
-    signals, sizeof(signals)/sizeof(signals[0]),
-    parameters, sizeof(parameters)/sizeof(parameters[0]),
-    monitors, sizeof(monitors)/sizeof(monitors[0]),
-    faults, sizeof(faults)/sizeof(faults[0]),
-    NULL, NULL
+    .signals = signals, .signal_count = sizeof(signals)/sizeof(signals[0]),
+    .parameters = parameters, .parameter_count = sizeof(parameters)/sizeof(parameters[0]),
+    .monitors = monitors, .monitor_count = sizeof(monitors)/sizeof(monitors[0]),
+    .faults = faults, .fault_count = sizeof(faults)/sizeof(faults[0])
 };

@@ -397,6 +397,16 @@ static const char *const translations[] = {
 _Static_assert(sizeof(tags) / sizeof(tags[0]) == DEMO_TXT_COUNT + 1, "demo tag count");
 _Static_assert(sizeof(translations) / sizeof(translations[0]) == DEMO_TXT_COUNT * 2,
                "demo translation count");
+/* 框架控件自己渲染的词汇：框架只内置英文，中文措辞属于 Demo，由后注册的包覆盖。 */
+static const char *const vocabulary_languages[] = {METER_LANGUAGE_CODE_EN, METER_LANGUAGE_CODE_ZH, NULL};
+static const char *const vocabulary_tags[] = {"meter.validity.live",    "meter.validity.stale",
+                                              "meter.validity.unknown", "meter.validity.error",
+                                              "meter.state.on",         "meter.state.off",
+                                              "meter.value.error",      NULL};
+static const char *const vocabulary_texts[] = {
+    "LIVE", "实时", "STALE", "过期", "NO DATA", "无数据", "SENSOR ERROR", "传感器错误", "ON", "开", "OFF", "关",
+    "ERR %s", "错误 %s"};
+static const meter_i18n_pack_t vocabulary = {vocabulary_languages, vocabulary_tags, vocabulary_texts};
 #define DEMO_MONITOR_COUNT (DEMO_TXT_FAULT_0 - DEMO_TXT_MONITOR_0)
 #define DEMO_FAULT_COUNT (DEMO_TXT_COUNT - DEMO_TXT_FAULT_0)
 /* 英文沿用运行时回退字体，中文使用仓库内固定的子集字体。 */
@@ -409,7 +419,8 @@ const lv_font_t *demo_font_resolve(meter_language_t language, meter_font_role_t 
 bool demo_i18n_init(void)
 {
     meter_font_provider_set(demo_font_resolve);
-    return lv_translation_add_static(languages, tags, translations) != NULL;
+    return meter_i18n_register_pack(&vocabulary) &&
+           lv_translation_add_static(languages, tags, translations) != NULL;
 }
 const char *demo_i18n_tag(demo_text_id_t id)
 {
