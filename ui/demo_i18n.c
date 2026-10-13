@@ -399,13 +399,12 @@ _Static_assert(sizeof(translations) / sizeof(translations[0]) == DEMO_TXT_COUNT 
                "demo translation count");
 /* 框架控件自己渲染的词汇：框架只内置英文，中文措辞属于 Demo，由后注册的包覆盖。 */
 static const char *const vocabulary_languages[] = {METER_LANGUAGE_CODE_EN, METER_LANGUAGE_CODE_ZH, NULL};
-static const char *const vocabulary_tags[] = {"meter.validity.live",    "meter.validity.stale",
-                                              "meter.validity.unknown", "meter.validity.error",
-                                              "meter.state.on",         "meter.state.off",
-                                              "meter.value.error",      NULL};
-static const char *const vocabulary_texts[] = {
-    "LIVE", "实时", "STALE", "过期", "NO DATA", "无数据", "SENSOR ERROR", "传感器错误", "ON", "开", "OFF", "关",
-    "ERR {0}", "错误 {0}"};
+static const char *const vocabulary_tags[] = {
+    "meter.validity.live", "meter.validity.stale", "meter.validity.unknown", "meter.validity.error",
+    "meter.state.on",      "meter.state.off",      "meter.value.error",      NULL};
+static const char *const vocabulary_texts[] = {"LIVE",   "实时",         "STALE",      "过期",    "NO DATA",
+                                               "无数据", "SENSOR ERROR", "传感器错误", "ON",      "开",
+                                               "OFF",    "关",           "ERR {0}",    "错误 {0}"};
 static const meter_i18n_pack_t vocabulary = {vocabulary_languages, vocabulary_tags, vocabulary_texts};
 #define DEMO_MONITOR_COUNT (DEMO_TXT_FAULT_0 - DEMO_TXT_MONITOR_0)
 #define DEMO_FAULT_COUNT (DEMO_TXT_COUNT - DEMO_TXT_FAULT_0)
