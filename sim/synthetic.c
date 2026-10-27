@@ -17,31 +17,31 @@ static void feed(meter_runtime_t *r, uint32_t now, float speed, float soc, float
     put16(f.data, (int)(speed * 100));
     put16(f.data + 2, (int)(steer * 100));
     put16(f.data + 4, 12460 + (int)(now / 360000));
-    meter_runtime_push(r, &f);
+    meter_runtime_receive(r, &f);
     f.id = 0x101;
     for (unsigned i = 0; i < 8; ++i)
         f.data[i] = 0;
     f.data[0] = (uint8_t)soc;
     put16(f.data + 1, 4800);
     f.data[3] = charge;
-    meter_runtime_push(r, &f);
+    meter_runtime_receive(r, &f);
     f.id = 0x102;
     for (unsigned i = 0; i < 8; ++i)
         f.data[i] = 0;
     put16(f.data, error ? 65535 : (int)(height * 1000));
-    meter_runtime_push(r, &f);
+    meter_runtime_receive(r, &f);
     f.id = 0x103;
     for (unsigned i = 0; i < 8; ++i)
         f.data[i] = 0;
     put16(f.data, (int)load);
-    meter_runtime_push(r, &f);
+    meter_runtime_receive(r, &f);
     f.id = 0x104;
     for (unsigned i = 0; i < 8; ++i)
         f.data[i] = 0;
     f.data[0] = (uint8_t)(1 | (speed < 0.5f ? 6 : 0) | (warning ? 8 : 0));
     put16(f.data + 1, warning ? 92 : 52);
     put16(f.data + 3, 43);
-    meter_runtime_push(r, &f);
+    meter_runtime_receive(r, &f);
 }
 void meter_synthetic_values(meter_runtime_t *r, uint32_t now, float speed, float soc, float steer)
 {

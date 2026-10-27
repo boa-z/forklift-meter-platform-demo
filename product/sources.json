@@ -23,12 +23,8 @@
   "product": [
     "product/demo_storage.c",
     "product/product.c",
-    "product/capabilities.c",
     "product/protocol_profile.c",
     "product/route_profile.c",
-    "product/locale_profile.c",
-    "product/resource_profile.c",
-    "product/auth_profile.c",
     "product/domain_policy.c"
   ],
   "ui_binding": [

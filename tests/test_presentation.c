@@ -53,10 +53,10 @@ int main(void)
     assert(meter_snapshot_fault_set(&core.snapshot, DEMO_FAULT_LOW_CHARGE, true));
     demo_presentation_build(&core.snapshot, &view);
     assert(view.faults[0].active && view.faults[0].code == DEMO_FAULT_LOW_CHARGE);
-    assert(meter_core_profile(&core, true, 1, 4));
+    assert(meter_snapshot_profile(&core.snapshot, true, 1, 4));
     demo_presentation_build(&core.snapshot, &view);
     assert(meter_profile_matches(&view.profile, core.snapshot.profile.generation));
-    assert(meter_core_profile(&core, true, 2, 0));
+    assert(meter_snapshot_profile(&core.snapshot, true, 2, 0));
     assert(!meter_profile_matches(&core.snapshot.profile, view.profile.generation));
     /* 根据当前快照副本重新构建，防止旧系列配置被当作当前配置。 */
     demo_presentation_build(&core.snapshot, &view);

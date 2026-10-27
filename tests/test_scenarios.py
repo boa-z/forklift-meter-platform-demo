@@ -11,7 +11,7 @@ def run(*args):
     report = json.loads(p.stdout.strip().splitlines()[-1])
     assert report["result"] == "PASS", report
     assert report["objects"] == report["objects_final"], report
-    assert report["decode_failed"] == report["overflow"] == 0, report
+    assert report["decode_failed"] == 0, report
     assert report["faults"] == len(report["fault_ids"]), report
     return report
 # 故障身份与产品目录同源于 schema，所以场景断言指向具体条目，

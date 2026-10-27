@@ -41,9 +41,6 @@ static bool sim_clock_write(const meter_wall_time_t *utc, void *context)
 static bool action(void *context, const meter_action_t *a)
 {
     action_context_t *c = context;
-    if (!c->product->auth->local_settings ||
-        (a->kind == METER_ACTION_PARAMETER && !c->product->capabilities->parameter_write))
-        return false;
     bool applied = a->kind == METER_ACTION_PRODUCT
         ? c->product->local_action && c->product->local_action(&c->core->snapshot, a, SDL_GetTicks())
         : meter_core_action(c->core, a);
@@ -215,7 +212,6 @@ int main(int argc, char **argv)
     if (scenario == DEMO_STALE || scenario == DEMO_OFFLINE)
     {
         meter_synthetic_values(&runtime, 0, 25, 50, -15);
-        meter_runtime_poll(&runtime, 32);
     }
     for (unsigned n = 0; (!frames || n < frames); ++n)
     {
@@ -260,13 +256,8 @@ int main(int argc, char **argv)
         }
         else if (n % 6 == 0)
             meter_synthetic_step(&runtime, now, scenario);
-        meter_runtime_poll(&runtime, 8);
         meter_core_connection(&core, runtime.connected, runtime.generation);
-        meter_core_tick(&core, now);
-        if (product->app_run)
-            product->app_run(SDL_GetTicks(), NULL);
-        if (product->evaluate)
-            product->evaluate(&core.snapshot);
+        meter_runtime_step(&runtime, &core, now, true);
         lv_tick_inc(16);
         uint64_t start = meter_host_counter();
         if (!update_preview || n == 0)
@@ -316,14 +307,14 @@ int main(int argc, char **argv)
     meter_value_t speed = meter_snapshot_read(&core.snapshot, METER_SPEED);
     printf("{\"result\":\"%s\",\"frames\":%u,\"objects\":%u,\"objects_final\":%u,"
            "\"heap_high_water\":%u,\"update_us_avg\":%.2f,\"update_us_max\":%.2f,"
-           "\"dispatched\":%u,\"decode_failed\":%u,\"overflow\":%u,\"faults\":%u,"
+           "\"dispatched\":%u,\"decode_failed\":%u,\"faults\":%u,"
            "\"fault_ids\":[%s],"
            "\"speed_state\":%u,\"speed\":%.2f,\"imperial\":%s,\"language\":\"%s\",\"page\":%u,\"ge_"
            "hits\":null,\"sw_fallbacks\":null,\"subpage\":%u}\n",
            pass ? "PASS" : "FAIL", completed, (unsigned)objects,
            (unsigned)meter_ui_object_count(lv_screen_active()), (unsigned)heap_peak,
            completed ? sum_us / completed : 0, max_us, (unsigned)runtime.diagnostics.dispatched,
-           (unsigned)runtime.diagnostics.decode_failed, (unsigned)runtime.diagnostics.overflow, active_faults,
+           (unsigned)runtime.diagnostics.decode_failed, active_faults,
            fault_ids, (unsigned)speed.state, (double)speed.value, core.snapshot.imperial ? "true" : "false",
            core.snapshot.language == METER_LANGUAGE_ZH ? "zh-CN" : "en", demo_ui_active_page(ui),
            demo_ui_active_subpage(ui));

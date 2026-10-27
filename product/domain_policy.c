@@ -24,8 +24,9 @@ static bool threshold(const meter_snapshot_t *s, uint16_t parameter_id, float *o
 {
     return meter_snapshot_parameter(s, parameter_id, out);
 }
-void meter_demo_evaluate(meter_snapshot_t *s)
+void meter_demo_evaluate(meter_snapshot_t *s, uint32_t now_ms)
 {
+    (void)now_ms;
     demo_settings_publish(s);
     float limit = 0;
     meter_snapshot_fault_set(s, DEMO_FAULT_LOW_CHARGE,
