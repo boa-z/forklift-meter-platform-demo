@@ -37,7 +37,7 @@ CAN 适配器向 Framework runtime/Core 发布语义值。Product 应用层生�
 
 ## UI 与资源
 
-UI 使用原生 LVGL。字体和图标属于 Product 资源，保留入库生成元数据。新增界面文字时先补翻译并重新生成字体子集，不使用整屏设计图片替代。实际渲染见[图集](../ui/screenshots.zh-CN.md)。
+UI 使用原生 LVGL。示例仪表盘、环形表、条形表、状态指示、数值标签和升级页是本 Product 自己的控件，位于 `ui/widgets/`（框架不提供可视控件）；它们的状态词是 Demo 语言包里的 `meter.*` 标签。字体和图标属于 Product 资源，保留入库生成元数据。新增界面文字时先补翻译并重新生成字体子集，不使用整屏设计图片替代。实际渲染见[图集](../ui/screenshots.zh-CN.md)。
 
 ## 墙上时钟与本地时间
 

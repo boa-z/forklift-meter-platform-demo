@@ -37,7 +37,7 @@ Transmit DBC cycle time is 100 ms. The Demo has no vehicle-control command route
 
 ## UI and resources
 
-The UI is native LVGL. Fonts and icons remain Product resources with checked-in generation metadata. Add translated text and regenerate the font subset before changing a screen; do not substitute a full-screen design image. Actual rendered output is in the [gallery](../ui/screenshots.md).
+The UI is native LVGL. The example gauges, rings, bars, status indicators, value labels and the update page are this Product's own widgets in `ui/widgets/` (the Framework ships none); their state words are the `meter.*` tags of the Demo language pack. Fonts and icons remain Product resources with checked-in generation metadata. Add translated text and regenerate the font subset before changing a screen; do not substitute a full-screen design image. Actual rendered output is in the [gallery](../ui/screenshots.md).
 
 ## Wall clock and local time
 

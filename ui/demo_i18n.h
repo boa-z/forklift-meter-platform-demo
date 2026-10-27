@@ -143,5 +143,4 @@ const char *demo_i18n_text(demo_text_id_t id);
 void demo_i18n_bind_label(lv_obj_t *label, demo_text_id_t id);
 const char *demo_i18n_monitor_label(size_t index);
 const char *demo_i18n_fault_description(size_t index);
-const lv_font_t *demo_font_resolve(meter_language_t language, meter_font_role_t role);
 #endif

@@ -6,7 +6,7 @@
 #include "sim/domain_fixture.h"
 #include "sim/synthetic.h"
 #include "ui/common/i18n/meter_i18n_runtime.h"
-#include "ui/common/widgets/meter_widgets.h"
+#include "ui/widgets/meter_widgets.h"
 #include "ui/demo_i18n.h"
 #include "ui/demo_ui.h"
 #include <stdio.h>

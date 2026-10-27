@@ -71,9 +71,9 @@ int main(void)
             lv_obj_send_event(ui->language_button, LV_EVENT_CLICKED, NULL);
         CHECK(core.snapshot.language == language);
         if (language == METER_LANGUAGE_ZH)
-            for (unsigned i = 0; i < METER_TXT_COUNT; ++i)
+            for (unsigned i = 0; i < METER_WIDGET_TXT_COUNT; ++i)
                 /* 若结果仍等于标签本身，说明通用翻译包丢了这一条中文译文。 */
-                CHECK(strcmp(meter_i18n_text((meter_text_id_t)i), meter_i18n_tag((meter_text_id_t)i)) != 0);
+                CHECK(strcmp(meter_widget_text((meter_widget_text_id_t)i), meter_widget_tag((meter_widget_text_id_t)i)) != 0);
         for (unsigned state = METER_VALUE_UNKNOWN; state <= METER_VALUE_ERROR; ++state)
         {
             for (size_t i = 0; i < core.snapshot.catalog->signal_count; ++i)

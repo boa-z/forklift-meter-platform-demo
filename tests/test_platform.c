@@ -5,7 +5,7 @@
 #include "protocols/common/meter_frame_router.h"
 #include "runtime/meter_runtime.h"
 #include "sim/synthetic.h"
-#include "ui/common/formatter/meter_format.h"
+#include "ui/widgets/meter_format.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>

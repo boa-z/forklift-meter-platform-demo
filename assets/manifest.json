@@ -64,7 +64,7 @@
     "modifications": "Uses upstream built-in generated fonts"
   },
   "original_geometry": {
-    "source": "ui/common/widgets",
+    "source": "ui/widgets",
     "license": "MIT",
     "description": "Needles, ticks, rings and bars use original primitive compositions"
   }

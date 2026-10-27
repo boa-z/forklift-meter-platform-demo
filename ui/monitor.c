@@ -1,4 +1,4 @@
-#include "ui/common/formatter/meter_format.h"
+#include "ui/widgets/meter_format.h"
 #include "ui/demo_internal.h"
 #include <math.h>
 #include <stdlib.h>
@@ -176,7 +176,7 @@ void demo_monitor_update(demo_ui_t *u)
         const demo_monitor_view_t *d = &u->view.monitors[i];
         lv_label_set_text(u->monitor_labels[i], demo_i18n_monitor_label(i));
         lv_obj_set_style_text_font(u->monitor_labels[i], font, 0);
-        meter_i18n_format_value(u->monitor_text[i], sizeof(u->monitor_text[i]), d->reading.value,
+        meter_widget_format_value(u->monitor_text[i], sizeof(u->monitor_text[i]), d->reading.value,
                                 d->reading.state, d->unit, 1, u->view.language);
         lv_obj_set_style_text_font(u->monitor_values[i], font, 0);
         lv_label_set_text_static(u->monitor_values[i], u->monitor_text[i]);
