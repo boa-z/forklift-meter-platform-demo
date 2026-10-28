@@ -36,7 +36,7 @@ static void apply_style(meter_value_label_t *v)
 }
 meter_value_label_t *meter_value_label_create(lv_obj_t *p, int x, int y, const char *unit)
 {
-    meter_value_label_t *v = lv_zalloc(sizeof(*v));
+    meter_value_label_t *v = lv_malloc_zeroed(sizeof(*v));
     if (!v)
         return NULL;
     v->style = *meter_widget_style_default();

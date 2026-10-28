@@ -43,9 +43,9 @@ static void redraw(meter_gauge_t *g)
     lv_line_set_points(g->needle, g->points, 2);
     bool missing = g->state == METER_VALUE_UNKNOWN || g->state == METER_VALUE_ERROR;
     if (missing)
-        lv_obj_set_hidden(g->needle, true);
+        lv_obj_add_flag(g->needle, LV_OBJ_FLAG_HIDDEN);
     else
-        lv_obj_set_hidden(g->needle, false);
+        lv_obj_remove_flag(g->needle, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_style_line_color(g->needle, g->state == METER_VALUE_STALE ? g->style.warning : g->style.primary,
                                 0);
     meter_widget_format_value(g->text, sizeof(g->text), g->current, missing ? g->state : METER_VALUE_VALID,
@@ -67,7 +67,7 @@ meter_gauge_t *meter_gauge_create(lv_obj_t *parent, int x, int y, const meter_ga
     if (!c || c->min >= c->max || truncf(c->min) != c->min || truncf(c->max) != c->max || c->ticks < 2 ||
         !c->major_every || c->diameter < 50)
         return NULL;
-    meter_gauge_t *g = lv_zalloc(sizeof(*g));
+    meter_gauge_t *g = lv_malloc_zeroed(sizeof(*g));
     if (!g)
         return NULL;
     g->config = *c;
@@ -81,7 +81,7 @@ meter_gauge_t *meter_gauge_create(lv_obj_t *parent, int x, int y, const meter_ga
     lv_obj_remove_style_all(g->root);
     lv_obj_set_size(g->root, c->diameter, c->diameter);
     lv_obj_set_pos(g->root, x, y);
-    lv_obj_set_scrollable(g->root, false);
+    lv_obj_remove_flag(g->root, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_event_cb(g->root, dispose, LV_EVENT_DELETE, g);
     g->scale = lv_scale_create(g->root);
     lv_obj_set_size(g->scale, c->diameter, c->diameter);

@@ -70,7 +70,7 @@ int main(void)
     /* 中英文未知读数只保留占位符，过期和错误仍有明确提示。 */
     for (unsigned language = 0; language < 2; ++language)
     {
-        lv_translation_set_language(meter_i18n_language_code((meter_language_t)language));
+        (void)meter_i18n_set_language((meter_language_t)language);
         meter_gauge_set_language(speed, (meter_language_t)language);
         meter_ring_set_language(ring, (meter_language_t)language);
         meter_gauge_set_state(speed, METER_VALUE_UNKNOWN);
@@ -83,7 +83,7 @@ int main(void)
         CHECK(contains_text(panel, meter_widget_state_text(METER_VALUE_STALE)));
         CHECK(contains_text(root, meter_widget_state_text(METER_VALUE_ERROR)));
     }
-    lv_translation_set_language(METER_LANGUAGE_CODE_EN);
+    (void)meter_i18n_set_language(METER_LANGUAGE_EN);
     CHECK(meter_gauge_set_range(speed, 0, 32));
     meter_gauge_set_value(speed, 31.06855f);
     CHECK(!meter_gauge_set_range(speed, 0, 31.06855f));

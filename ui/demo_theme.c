@@ -22,7 +22,7 @@ void demo_theme_panel(lv_obj_t *panel)
     lv_obj_set_style_outline_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 8, 0);
     lv_obj_set_style_pad_all(panel, 0, 0);
-    lv_obj_set_scrollable(panel, false);
+    lv_obj_remove_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
 }
 void demo_theme_button(lv_obj_t *button)
 {

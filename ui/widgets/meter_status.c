@@ -21,7 +21,7 @@ static void apply_style(meter_status_t *s)
 }
 meter_status_t *meter_status_create(lv_obj_t *p, int x, int y, const char *name, const lv_image_dsc_t *icon)
 {
-    meter_status_t *s = lv_zalloc(sizeof(*s));
+    meter_status_t *s = lv_malloc_zeroed(sizeof(*s));
     if (!s)
         return NULL;
     s->style = *meter_widget_style_default();
@@ -69,7 +69,7 @@ void meter_status_set_name(meter_status_t *s, const char *name)
     /* 空名称表示纯图标模式；命名控件保留原有文字与尺寸。 */
     s->name = name ? name : "";
     bool icon_only = s->name[0] == '\0';
-    lv_obj_set_hidden(s->label, icon_only);
+    ((icon_only) ? lv_obj_add_flag(s->label, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(s->label, LV_OBJ_FLAG_HIDDEN));
     lv_obj_set_size(s->root, icon_only ? 64 : 140, icon_only ? 48 : 40);
     if (s->icon)
     {

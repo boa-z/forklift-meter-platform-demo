@@ -76,7 +76,7 @@ void *demo_ui_create(void *parent, const meter_ui_actions_t *actions)
     lv_obj_set_size(u->root, lv_pct(100), lv_pct(100));
     lv_obj_set_style_bg_color(u->root, lv_color_hex(0x07090b), 0);
     lv_obj_set_style_bg_opa(u->root, 255, 0);
-    lv_obj_set_scrollable(u->root, false);
+    lv_obj_remove_flag(u->root, LV_OBJ_FLAG_SCROLLABLE);
     demo_theme_panel(u->root);
     /* 显示画布铺满矩形屏幕，仅卡片保留圆角。 */
     lv_obj_set_style_radius(u->root, 0, 0);
@@ -95,7 +95,7 @@ void *demo_ui_create(void *parent, const meter_ui_actions_t *actions)
         lv_obj_remove_style_all(u->pages[i]);
         lv_obj_set_pos(u->pages[i], 0, 53);
         lv_obj_set_size(u->pages[i], 800, 372);
-        lv_obj_set_scrollable(u->pages[i], false);
+        lv_obj_remove_flag(u->pages[i], LV_OBJ_FLAG_SCROLLABLE);
         demo_theme_panel(u->pages[i]);
         lv_obj_set_style_radius(u->pages[i], 0, 0);
         lv_obj_set_style_bg_color(u->pages[i], lv_color_hex(0x07090b), 0);
@@ -118,7 +118,7 @@ void demo_ui_present(void *context, const meter_snapshot_t *snapshot, uint32_t e
     demo_presentation_build(snapshot, &u->view);
     if (!u->language_presented || u->presented_language != u->view.language)
     {
-        lv_translation_set_language(meter_i18n_language_code(u->view.language));
+        (void)meter_i18n_set_language(u->view.language);
         u->language_presented = true;
         u->presented_language = u->view.language;
     }
@@ -176,7 +176,7 @@ static void present_update(void *context, const meter_update_view_t *view, meter
     demo_text_id_t phase = DEMO_TXT_OTA_FAILED;
     if ((unsigned)view->state < sizeof(phases) / sizeof(phases[0]))
         phase = phases[view->state];
-    lv_translation_set_language(meter_i18n_language_code(language));
+    (void)meter_i18n_set_language(language);
     meter_update_widget_text_t text = {
         demo_i18n_text(DEMO_TXT_OTA_TITLE),
         demo_i18n_text(phase),

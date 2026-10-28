@@ -34,7 +34,7 @@ static int check_layout(lv_obj_t *parent)
     for (uint32_t i = 0; i < lv_obj_get_child_count(parent); ++i)
     {
         lv_obj_t *child = lv_obj_get_child(parent, (int32_t)i);
-        if (lv_obj_is_hidden(child))
+        if (lv_obj_has_flag(child, LV_OBJ_FLAG_HIDDEN))
             continue;
         lv_area_t area;
         lv_obj_get_coords(child, &area);
@@ -63,14 +63,14 @@ static int check_rows(demo_ui_t *ui, unsigned page, unsigned subpage)
         const unsigned visible = subpage == 1 ? (unsigned)DEMO_SETTINGS_CARD_CLOCK
                                               : (unsigned)DEMO_SETTINGS_CARD_USER;
         for (unsigned i = 0; i < DEMO_SETTINGS_CARDS; ++i)
-            CHECK(lv_obj_is_hidden(ui->settings_cards[i]) == (i != visible));
+            CHECK(lv_obj_has_flag(ui->settings_cards[i], LV_OBJ_FLAG_HIDDEN) == (i != visible));
         return 0;
     }
     for (size_t i = 0; i < slots; ++i)
     {
         lv_obj_t *label = page == DEMO_MONITOR ? ui->monitor_labels[i] : ui->fault_rows[i];
         lv_obj_t *row = lv_obj_get_parent(label);
-        CHECK(lv_obj_is_hidden(row) == (i / capacity != subpage));
+        CHECK(lv_obj_has_flag(row, LV_OBJ_FLAG_HIDDEN) == (i / capacity != subpage));
         CHECK(lv_obj_get_height(row) == 56);
         CHECK(lv_obj_get_y(row) == 58 + (int)(i % capacity) * 60);
         if (page == DEMO_MONITOR)
@@ -131,10 +131,10 @@ static int check_dashboard_footer(demo_ui_t *ui)
             {
                 lv_obj_t *element = lv_obj_get_child(child, (int32_t)k);
                 if (lv_obj_check_type(element, &lv_label_class))
-                    CHECK(lv_obj_is_hidden(element) && strlen(lv_label_get_text(element)) == 0);
+                    CHECK(lv_obj_has_flag(element, LV_OBJ_FLAG_HIDDEN) && strlen(lv_label_get_text(element)) == 0);
                 if (lv_obj_check_type(element, &lv_image_class))
                 {
-                    CHECK(!lv_obj_is_hidden(element));
+                    CHECK(!lv_obj_has_flag(element, LV_OBJ_FLAG_HIDDEN));
                     CHECK(lv_image_get_scale_x(element) == 512 && lv_image_get_scale_y(element) == 512);
                     ++icons;
                 }
@@ -266,19 +266,19 @@ int main(int argc, char **argv)
     lv_obj_send_event(ui->password_keyboard, LV_EVENT_READY, NULL);
     demo_settings_publish(&core.snapshot);
     demo_ui_present(ui, &core.snapshot, 16);
-    CHECK(!ui->view.admin_authorized && lv_obj_is_hidden(ui->admin_items[0]));
+    CHECK(!ui->view.admin_authorized && lv_obj_has_flag(ui->admin_items[0], LV_OBJ_FLAG_HIDDEN));
     lv_obj_send_event(ui->admin_password_button, LV_EVENT_CLICKED, NULL);
     lv_textarea_set_text(ui->admin_password, "5312");
     lv_obj_send_event(ui->password_keyboard, LV_EVENT_READY, NULL);
     demo_settings_publish(&core.snapshot);
     demo_ui_present(ui, &core.snapshot, 16);
-    CHECK(ui->view.admin_authorized && !lv_obj_is_hidden(ui->admin_items[0]));
+    CHECK(ui->view.admin_authorized && !lv_obj_has_flag(ui->admin_items[0], LV_OBJ_FLAG_HIDDEN));
     CHECK(strlen(lv_textarea_get_text(ui->admin_password)) == 0);
     demo_navigation_show(ui, DEMO_MONITOR);
     lv_obj_send_event(ui->parameter_mode_button, LV_EVENT_CLICKED, NULL);
     CHECK(ui->monitor_pager.count == 1);
     lv_obj_send_event(ui->parameter_rows[0], LV_EVENT_CLICKED, NULL);
-    CHECK(!lv_obj_is_hidden(ui->parameter_editor));
+    CHECK(!lv_obj_has_flag(ui->parameter_editor, LV_OBJ_FLAG_HIDDEN));
     lv_textarea_set_text(ui->parameter_input, "");
     lv_obj_send_event(ui->parameter_keyboard, LV_EVENT_READY, NULL);
     CHECK(actions_sent == 2);
@@ -313,7 +313,7 @@ int main(int argc, char **argv)
         {
             unsigned before = actions_sent;
             lv_obj_send_event(ui->setting_entries[i], LV_EVENT_CLICKED, NULL);
-            CHECK(actions_sent == before && !lv_obj_is_hidden(ui->settings_detail));
+            CHECK(actions_sent == before && !lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
             CHECK(ui->selected_setting == i);
             lv_obj_update_layout(ui->root);
             CHECK(check_layout(ui->settings_detail) == 0);
@@ -326,13 +326,13 @@ int main(int argc, char **argv)
                 CHECK(meter_host_capture(path));
             }
             lv_obj_send_event(ui->settings_detail_back, LV_EVENT_CLICKED, NULL);
-            CHECK(actions_sent == before && lv_obj_is_hidden(ui->settings_detail));
-            CHECK(ui->settings_tab == 0 && !lv_obj_is_hidden(ui->settings_cards[0]));
+            CHECK(actions_sent == before && lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
+            CHECK(ui->settings_tab == 0 && !lv_obj_has_flag(ui->settings_cards[0], LV_OBJ_FLAG_HIDDEN));
         }
         lv_obj_send_event(ui->version_entry, LV_EVENT_CLICKED, NULL);
         demo_ui_present(ui, &core.snapshot, 16);
         lv_obj_update_layout(ui->root);
-        CHECK(ui->version_open && !lv_obj_is_hidden(ui->version_back));
+        CHECK(ui->version_open && !lv_obj_has_flag(ui->version_back, LV_OBJ_FLAG_HIDDEN));
         CHECK(check_layout(ui->pages[DEMO_SETTINGS]) == 0);
         if (argc == 2)
         {
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
             unsigned before = actions_sent;
             lv_obj_send_event(ui->admin_items[i], LV_EVENT_CLICKED, NULL);
             CHECK(actions_sent == before && ui->selected_setting == 4 + i);
-            CHECK(!lv_obj_is_hidden(ui->settings_detail));
+            CHECK(!lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
             lv_obj_send_event(ui->settings_detail_back, LV_EVENT_CLICKED, NULL);
             CHECK(ui->settings_tab == 1 && actions_sent == before);
         }
@@ -386,13 +386,13 @@ int main(int argc, char **argv)
     demo_ui_present(ui, &core.snapshot, 16);
     CHECK(ui->view.limit == 31 && !strcmp(lv_label_get_text(ui->setting_values[3]), "31 km/h"));
     demo_navigation_show(ui, DEMO_MONITOR);
-    CHECK(lv_obj_is_hidden(ui->settings_detail));
+    CHECK(lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
     demo_navigation_show(ui, DEMO_SETTINGS);
     demo_settings_reset(0);
     demo_settings_publish(&core.snapshot);
     demo_ui_present(ui, &core.snapshot, 16);
     lv_obj_send_event(ui->settings_menu[1], LV_EVENT_CLICKED, NULL);
-    CHECK(!lv_obj_is_hidden(ui->password_editor) && ui->settings_tab == 0);
+    CHECK(!lv_obj_has_flag(ui->password_editor, LV_OBJ_FLAG_HIDDEN) && ui->settings_tab == 0);
     /* 验证实际数字键盘的确认键，不能只向键盘直接发送 READY 掩盖接线缺陷。 */
     lv_textarea_set_text(ui->admin_password, "5312");
     lv_buttonmatrix_set_selected_button(ui->password_keyboard, 11);
@@ -401,11 +401,11 @@ int main(int argc, char **argv)
     demo_ui_present(ui, &core.snapshot, 16);
     CHECK(ui->view.admin_authorized && ui->settings_tab == 1);
     lv_obj_send_event(ui->admin_items[0], LV_EVENT_CLICKED, NULL);
-    CHECK(!lv_obj_is_hidden(ui->settings_detail));
+    CHECK(!lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
     demo_settings_reset(0);
     demo_settings_publish(&core.snapshot);
     demo_ui_present(ui, &core.snapshot, 16);
-    CHECK(ui->settings_tab == 0 && lv_obj_is_hidden(ui->settings_detail));
+    CHECK(ui->settings_tab == 0 && lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
     CHECK(meter_ui_object_count(ui->root) == objects);
     demo_ui_destroy(ui);
     meter_host_close();

@@ -147,31 +147,31 @@ int main(void)
     present(&core, ui);
     CHECK(!ui->view.admin_authorized && !ui->view.user_authorized);
     CHECK(ui->settings_subpage == 0u && ui->settings_pager.count == (unsigned)DEMO_USER_SETTINGS_PAGES);
-    CHECK(lv_obj_is_hidden(ui->settings_cards[DEMO_SETTINGS_CARD_CLOCK]));
-    CHECK(!lv_obj_is_hidden(ui->settings_cards[DEMO_SETTINGS_CARD_USER]));
+    CHECK(lv_obj_has_flag(ui->settings_cards[DEMO_SETTINGS_CARD_CLOCK], LV_OBJ_FLAG_HIDDEN));
+    CHECK(!lv_obj_has_flag(ui->settings_cards[DEMO_SETTINGS_CARD_USER], LV_OBJ_FLAG_HIDDEN));
     lv_obj_send_event(ui->settings_pager.next, LV_EVENT_CLICKED, NULL);
     present(&core, ui);
     CHECK(ui->settings_subpage == 1u);
     CHECK(!strcmp(lv_label_get_text(ui->settings_pager.indicator), "2/2"));
-    CHECK(!lv_obj_is_hidden(ui->settings_cards[DEMO_SETTINGS_CARD_CLOCK]));
-    CHECK(lv_obj_is_hidden(ui->settings_cards[DEMO_SETTINGS_CARD_USER]));
+    CHECK(!lv_obj_has_flag(ui->settings_cards[DEMO_SETTINGS_CARD_CLOCK], LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_has_flag(ui->settings_cards[DEMO_SETTINGS_CARD_USER], LV_OBJ_FLAG_HIDDEN));
     CHECK(!strcmp(lv_label_get_text(ui->settings_title), demo_i18n_text(DEMO_TXT_CLOCK_SET)));
     /* 第二页只有"时钟"这一条目，值就是当前本地时间；轮盘界面此时还没出现。 */
-    CHECK(!lv_obj_is_hidden(ui->clock_entry));
+    CHECK(!lv_obj_has_flag(ui->clock_entry, LV_OBJ_FLAG_HIDDEN));
     CHECK(!strcmp(lv_label_get_text(ui->clock_value), "08:30"));
-    CHECK(lv_obj_is_hidden(ui->clock_group));
-    CHECK(lv_obj_is_hidden(ui->settings_detail));
+    CHECK(lv_obj_has_flag(ui->clock_group, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
 
     /* 点进条目才是真正的对时界面：六个轮盘，量程与顺序都要与 App 侧一致。 */
     lv_obj_send_event(ui->clock_entry, LV_EVENT_CLICKED, NULL);
-    CHECK(!lv_obj_is_hidden(ui->settings_detail) && !lv_obj_is_hidden(ui->clock_group));
+    CHECK(!lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN) && !lv_obj_has_flag(ui->clock_group, LV_OBJ_FLAG_HIDDEN));
     CHECK(ui->selected_setting == DEMO_SETTING_CLOCK);
     CHECK(!strcmp(lv_label_get_text(ui->settings_detail_title), demo_i18n_text(DEMO_TXT_CLOCK_SET)));
     CHECK(!strcmp(lv_label_get_text(ui->settings_detail_value), "08:30"));
     /* 轮盘界面里没有其它条目的控件。 */
-    CHECK(lv_obj_is_hidden(ui->unit_button) && lv_obj_is_hidden(ui->language_button));
-    CHECK(lv_obj_is_hidden(ui->brightness) && lv_obj_is_hidden(ui->limit));
-    CHECK(lv_obj_is_hidden(ui->admin_detail_button));
+    CHECK(lv_obj_has_flag(ui->unit_button, LV_OBJ_FLAG_HIDDEN) && lv_obj_has_flag(ui->language_button, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_has_flag(ui->brightness, LV_OBJ_FLAG_HIDDEN) && lv_obj_has_flag(ui->limit, LV_OBJ_FLAG_HIDDEN));
+    CHECK(lv_obj_has_flag(ui->admin_detail_button, LV_OBJ_FLAG_HIDDEN));
     const unsigned expected_count[DEMO_CLOCK_FIELDS] = {79u, 12u, 31u, 24u, 60u, 60u};
     const unsigned expected_index[DEMO_CLOCK_FIELDS] = {2026u - 2021u, 9u, 0u, 8u, 30u, 0u};
     for (unsigned field = 0u; field < DEMO_CLOCK_FIELDS; ++field)
@@ -229,21 +229,21 @@ int main(void)
     /* CAN 波特率：管理员页上的三个单选按钮，只有当前值处于 CHECKED。 */
     demo_settings_show_page(ui, 1);
     present(&core, ui);
-    CHECK(!ui->view.admin_authorized && lv_obj_is_hidden(ui->admin_items[0]));
+    CHECK(!ui->view.admin_authorized && lv_obj_has_flag(ui->admin_items[0], LV_OBJ_FLAG_HIDDEN));
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
-        CHECK(lv_obj_is_hidden(ui->rate_buttons[i]));
+        CHECK(lv_obj_has_flag(ui->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
     demo_settings_reset(1);
     meter_action_t login = demo_settings_intent(DEMO_INTENT_ADMIN_LOGIN, 5312);
     CHECK(demo_settings_action(&core.snapshot, &login, lv_tick_get()));
     present(&core, ui);
-    CHECK(ui->view.admin_authorized && !lv_obj_is_hidden(ui->admin_items[0]));
+    CHECK(ui->view.admin_authorized && !lv_obj_has_flag(ui->admin_items[0], LV_OBJ_FLAG_HIDDEN));
     /* 打开 CAN 波特率这一行：单选组出现，循环切换按钮让位。 */
     lv_obj_send_event(ui->admin_items[0], LV_EVENT_CLICKED, NULL);
     CHECK(ui->selected_setting == 4u);
-    CHECK(lv_obj_is_hidden(ui->admin_detail_button));
+    CHECK(lv_obj_has_flag(ui->admin_detail_button, LV_OBJ_FLAG_HIDDEN));
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
     {
-        CHECK(!lv_obj_is_hidden(ui->rate_buttons[i]));
+        CHECK(!lv_obj_has_flag(ui->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
         CHECK(lv_obj_has_state(ui->rate_buttons[i], LV_STATE_CHECKED) == (ui->view.admin_values[0] == i));
     }
     /* 选 500 kbit/s：提交第 2 项，发布后选中态随之移动。 */
@@ -257,9 +257,9 @@ int main(void)
     CHECK(!lv_obj_has_state(ui->rate_buttons[0], LV_STATE_CHECKED));
     /* 其余管理员行仍然用循环切换按钮，不能被单选组顶掉。 */
     lv_obj_send_event(ui->admin_items[1], LV_EVENT_CLICKED, NULL);
-    CHECK(ui->selected_setting == 5u && !lv_obj_is_hidden(ui->admin_detail_button));
+    CHECK(ui->selected_setting == 5u && !lv_obj_has_flag(ui->admin_detail_button, LV_OBJ_FLAG_HIDDEN));
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
-        CHECK(lv_obj_is_hidden(ui->rate_buttons[i]));
+        CHECK(lv_obj_has_flag(ui->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
 
     meter_wall_clock_bind(NULL, NULL);
     meter_wall_clock_bind_set(NULL, NULL);

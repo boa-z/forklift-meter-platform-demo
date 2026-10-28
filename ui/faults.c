@@ -4,7 +4,7 @@ void demo_faults_show_page(demo_ui_t *u, unsigned page)
     if (!demo_pager_select(&u->fault_pager, page))
         return;
     for (size_t i = 0; i < DEMO_FAULT_SLOTS; ++i)
-        lv_obj_set_hidden(lv_obj_get_parent(u->fault_rows[i]), i / DEMO_FAULTS_PER_PAGE != page);
+        ((i / DEMO_FAULTS_PER_PAGE != page) ? lv_obj_add_flag(lv_obj_get_parent(u->fault_rows[i]), LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(lv_obj_get_parent(u->fault_rows[i]), LV_OBJ_FLAG_HIDDEN));
 }
 static void turn_page(lv_event_t *event)
 {

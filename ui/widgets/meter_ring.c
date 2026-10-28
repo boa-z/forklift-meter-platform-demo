@@ -49,7 +49,7 @@ meter_ring_t *meter_arc_bar_create(lv_obj_t *parent, int x, int y, int diameter,
     if (!isfinite(start) || !isfinite(end) || diameter <= 0 || stroke < 1 || stroke * 2 > diameter || start < 0 ||
         start > 360 || end < 0 || end > 360 || start >= end)
         return NULL;
-    meter_ring_t *r = lv_zalloc(sizeof(*r));
+    meter_ring_t *r = lv_malloc_zeroed(sizeof(*r));
     if (!r)
         return NULL;
     r->max = 100;
@@ -63,7 +63,7 @@ meter_ring_t *meter_arc_bar_create(lv_obj_t *parent, int x, int y, int diameter,
     lv_arc_set_bg_angles(r->arc, start, end);
     lv_arc_set_range(r->arc, 0, 1000);
     lv_obj_remove_style(r->arc, NULL, LV_PART_KNOB);
-    lv_obj_set_clickable(r->arc, false);
+    lv_obj_remove_flag(r->arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_style_arc_width(r->arc, stroke, LV_PART_MAIN);
     lv_obj_set_style_arc_width(r->arc, stroke, LV_PART_INDICATOR);
     lv_obj_add_event_cb(r->arc, dispose, LV_EVENT_DELETE, r);

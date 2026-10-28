@@ -28,8 +28,8 @@ static void clock_sync(demo_ui_t *u);
 static void settings_detail_close(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
-    lv_obj_set_hidden(u->settings_detail, true);
-    lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), false);
+    lv_obj_add_flag(u->settings_detail, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(lv_obj_get_parent(u->settings_pager.indicator), LV_OBJ_FLAG_HIDDEN);
 }
 static void settings_detail_open(lv_event_t *event)
 {
@@ -49,40 +49,40 @@ static void settings_detail_open(lv_event_t *event)
     u->selected_setting = selected;
     lv_obj_t *controls[] = {u->unit_button, u->language_button, u->brightness, u->limit};
     for (unsigned i = 0; i < 4; ++i)
-        lv_obj_set_hidden(controls[i], i != selected);
+        ((i != selected) ? lv_obj_add_flag(controls[i], LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(controls[i], LV_OBJ_FLAG_HIDDEN));
     /* CAN 波特率行用自己的单选组，其余管理员行仍用循环切换按钮。 */
     const bool admin_row = selected >= 4u && selected < DEMO_SETTING_CLOCK;
     const bool rate_row = admin_row && selected == 4u;
-    lv_obj_set_hidden(u->admin_detail_button, !admin_row || rate_row);
+    ((!admin_row || rate_row) ? lv_obj_add_flag(u->admin_detail_button, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->admin_detail_button, LV_OBJ_FLAG_HIDDEN));
     for (unsigned i = 0; i < DEMO_CAN_RATE_OPTIONS; ++i)
-        lv_obj_set_hidden(u->rate_buttons[i], !rate_row);
+        ((!rate_row) ? lv_obj_add_flag(u->rate_buttons[i], LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
     /* 对时轮盘只在从"时钟"条目进来时出现，并在进入时按当前读数铺一次。 */
     const bool clock_row = selected == DEMO_SETTING_CLOCK;
-    lv_obj_set_hidden(u->clock_group, !clock_row);
+    ((!clock_row) ? lv_obj_add_flag(u->clock_group, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->clock_group, LV_OBJ_FLAG_HIDDEN));
     if (clock_row)
         clock_sync(u);
-    lv_obj_set_hidden(u->settings_detail, false);
-    lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), true);
+    lv_obj_remove_flag(u->settings_detail, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(lv_obj_get_parent(u->settings_pager.indicator), LV_OBJ_FLAG_HIDDEN);
     demo_settings_update(u);
 }
 void demo_editors_close(demo_ui_t *u)
 {
-    lv_obj_set_hidden(u->parameter_editor, true);
-    lv_obj_set_hidden(u->password_editor, true);
+    lv_obj_add_flag(u->parameter_editor, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(u->password_editor, LV_OBJ_FLAG_HIDDEN);
     lv_textarea_set_text(u->user_password, "");
     lv_textarea_set_text(u->admin_password, "");
     if (u->settings_detail)
-        lv_obj_set_hidden(u->settings_detail, true);
+        lv_obj_add_flag(u->settings_detail, LV_OBJ_FLAG_HIDDEN);
 }
 static void password_open(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     u->password_admin = lv_event_get_target_obj(event) == u->admin_password_button;
-    lv_obj_set_hidden(u->user_password, u->password_admin);
-    lv_obj_set_hidden(u->admin_password, !u->password_admin);
+    ((u->password_admin) ? lv_obj_add_flag(u->user_password, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->user_password, LV_OBJ_FLAG_HIDDEN));
+    ((!u->password_admin) ? lv_obj_add_flag(u->admin_password, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->admin_password, LV_OBJ_FLAG_HIDDEN));
     lv_obj_t *field = u->password_admin ? u->admin_password : u->user_password;
     lv_textarea_set_text(field, "");
-    lv_obj_set_hidden(u->password_editor, false);
+    lv_obj_remove_flag(u->password_editor, LV_OBJ_FLAG_HIDDEN);
 }
 static void password_submit(lv_event_t *event);
 static void password_back(lv_event_t *event)
@@ -239,7 +239,7 @@ static void settings_show_card(demo_ui_t *u)
     else if (u->settings_subpage == 1u)
         card = DEMO_SETTINGS_CARD_CLOCK;
     for (unsigned i = 0u; i < DEMO_SETTINGS_CARDS; ++i)
-        lv_obj_set_hidden(u->settings_cards[i], i != card);
+        ((i != card) ? lv_obj_add_flag(u->settings_cards[i], LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->settings_cards[i], LV_OBJ_FLAG_HIDDEN));
 }
 void demo_settings_show_page(demo_ui_t *u, unsigned page)
 {
@@ -249,9 +249,9 @@ void demo_settings_show_page(demo_ui_t *u, unsigned page)
     u->settings_tab = page;
     u->settings_subpage = 0u;
     u->admin_navigation_pending = false;
-    lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), false);
+    lv_obj_remove_flag(lv_obj_get_parent(u->settings_pager.indicator), LV_OBJ_FLAG_HIDDEN);
     u->version_open = false;
-    lv_obj_set_hidden(u->version_back, true);
+    lv_obj_add_flag(u->version_back, LV_OBJ_FLAG_HIDDEN);
     /* 用户设置有两页，管理员页只有一页；翻页额度随标签页切换。 */
     u->settings_pager.count = page == 0u ? (unsigned)DEMO_USER_SETTINGS_PAGES : 1u;
     (void)demo_pager_select(&u->settings_pager, 0);
@@ -271,9 +271,9 @@ static void settings_menu_select(lv_event_t *event)
                 u->admin_navigation_pending = true;
                 u->password_admin = true;
                 lv_textarea_set_text(u->admin_password, "");
-                lv_obj_set_hidden(u->user_password, true);
-                lv_obj_set_hidden(u->admin_password, false);
-                lv_obj_set_hidden(u->password_editor, false);
+                lv_obj_add_flag(u->user_password, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_remove_flag(u->admin_password, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_remove_flag(u->password_editor, LV_OBJ_FLAG_HIDDEN);
             }
             else
                 demo_settings_show_page(u, i);
@@ -293,17 +293,17 @@ static void version_open(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     u->version_open = true;
-    lv_obj_set_hidden(lv_obj_get_parent(u->settings_pager.indicator), true);
+    lv_obj_add_flag(lv_obj_get_parent(u->settings_pager.indicator), LV_OBJ_FLAG_HIDDEN);
     for (unsigned i = 0; i < DEMO_SETTINGS_CARDS; ++i)
-        lv_obj_set_hidden(u->settings_cards[i], i != DEMO_SETTINGS_CARD_VERSION);
+        ((i != DEMO_SETTINGS_CARD_VERSION) ? lv_obj_add_flag(u->settings_cards[i], LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->settings_cards[i], LV_OBJ_FLAG_HIDDEN));
     lv_label_set_text(u->settings_title, demo_i18n_text(DEMO_TXT_INSTRUMENT_VERSION));
-    lv_obj_set_hidden(u->version_back, false);
+    lv_obj_remove_flag(u->version_back, LV_OBJ_FLAG_HIDDEN);
 }
 static void version_close(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     (void)event;
-    lv_obj_set_hidden(u->version_back, true);
+    lv_obj_add_flag(u->version_back, LV_OBJ_FLAG_HIDDEN);
     demo_settings_show_page(u, 0);
 }
 static lv_obj_t *settings_button(demo_ui_t *u, lv_obj_t *parent, int x, int y, demo_text_id_t text,
@@ -325,7 +325,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_t *p = u->pages[DEMO_SETTINGS];
     u->settings_title = meter_text(p, 430, 8, "", &lv_font_montserrat_24, 0xedf5f8);
     u->settings_note = meter_text(p, 24, 34, "", &lv_font_montserrat_20, 0x8ba9bb);
-    lv_obj_set_hidden(u->settings_note, true);
+    lv_obj_add_flag(u->settings_note, LV_OBJ_FLAG_HIDDEN);
     /* 左侧背景铺满内容区，分类按钮保持固定高度。 */
     u->settings_rail = lv_obj_create(p);
     lv_obj_remove_style_all(u->settings_rail);
@@ -335,7 +335,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_style_bg_opa(u->settings_rail, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(u->settings_rail, 0, 0);
     lv_obj_set_style_outline_width(u->settings_rail, 0, 0);
-    lv_obj_set_scrollable(u->settings_rail, false);
+    lv_obj_remove_flag(u->settings_rail, LV_OBJ_FLAG_SCROLLABLE);
     const demo_text_id_t menu_ids[] = {DEMO_TXT_USER_SETTINGS, DEMO_TXT_ADMIN_SETTINGS};
     for (unsigned i = 0; i < 2; ++i)
     {
@@ -357,7 +357,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_remove_style_all(u->settings_cards[i]);
         lv_obj_set_pos(u->settings_cards[i], 200, DEMO_LIST_TOP);
         lv_obj_set_size(u->settings_cards[i], 584, DEMO_LIST_CAPACITY * DEMO_LIST_PITCH);
-        lv_obj_set_scrollable(u->settings_cards[i], false);
+        lv_obj_remove_flag(u->settings_cards[i], LV_OBJ_FLAG_SCROLLABLE);
     }
     lv_obj_t *card = u->settings_cards[0];
     for (unsigned i = 0; i < 4; ++i)
@@ -385,7 +385,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_size(u->settings_detail, 600, 372);
     lv_obj_set_style_bg_color(u->settings_detail, lv_color_hex(0x07090b), 0);
     lv_obj_set_style_bg_opa(u->settings_detail, LV_OPA_COVER, 0);
-    lv_obj_set_scrollable(u->settings_detail, false);
+    lv_obj_remove_flag(u->settings_detail, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_parent(u->settings_note, u->settings_detail);
     lv_obj_set_pos(u->settings_note, 18, 300);
     lv_obj_set_width(u->settings_note, 560);
@@ -419,7 +419,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_t *label = meter_text(button, 0, 0, rate_labels[i], &lv_font_montserrat_16, 0xedf5f8);
         lv_obj_center(label);
         lv_obj_add_event_cb(button, rate_select, LV_EVENT_CLICKED, u);
-        lv_obj_set_hidden(button, true);
+        lv_obj_add_flag(button, LV_OBJ_FLAG_HIDDEN);
         u->rate_buttons[i] = button;
     }
     u->brightness = lv_slider_create(u->settings_detail);
@@ -434,7 +434,7 @@ void demo_settings_create(demo_ui_t *u)
     }
     lv_slider_set_range(u->brightness, 10, 100);
     lv_slider_set_range(u->limit, 5, 50);
-    lv_obj_set_hidden(u->settings_detail, true);
+    lv_obj_add_flag(u->settings_detail, LV_OBJ_FLAG_HIDDEN);
     card = u->settings_cards[1];
     u->user_password_button = settings_button(u, card, 22, 24, DEMO_TXT_USER_PASSWORD, password_open);
     u->admin_password_button = settings_button(u, card, 290, 24, DEMO_TXT_ADMIN_PASSWORD, password_open);
@@ -447,7 +447,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_set_size(u->password_editor, 800, 372);
     lv_obj_set_style_bg_color(u->password_editor, lv_color_hex(0x11161b), 0);
     lv_obj_set_style_bg_opa(u->password_editor, LV_OPA_COVER, 0);
-    lv_obj_set_scrollable(u->password_editor, false);
+    lv_obj_remove_flag(u->password_editor, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_t *side = lv_obj_create(u->password_editor);
     lv_obj_remove_style_all(side);
     lv_obj_set_pos(side, 0, 0);
@@ -507,7 +507,7 @@ void demo_settings_create(demo_ui_t *u)
     }
     u->password_keyboard = lv_buttonmatrix_create(u->password_editor);
     demo_theme_keyboard(u->password_keyboard);
-    static const char *const password_map[] = {
+    static const char *password_map[] = {
         "1", "2",          "3", "\n", "4", "5", "6", "\n", "7", "8", "9", "\n", LV_SYMBOL_BACKSPACE,
         "0", LV_SYMBOL_OK, ""};
     lv_buttonmatrix_set_map(u->password_keyboard, password_map);
@@ -535,7 +535,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_set_width(u->admin_value_labels[i], 236);
         lv_obj_set_style_text_align(u->admin_value_labels[i], LV_TEXT_ALIGN_RIGHT, 0);
         lv_obj_align(u->admin_value_labels[i], LV_ALIGN_RIGHT_MID, -30, 0);
-        lv_obj_set_hidden(u->admin_items[i], true);
+        lv_obj_add_flag(u->admin_items[i], LV_OBJ_FLAG_HIDDEN);
     }
     card = u->settings_cards[3];
     const demo_text_id_t version_ids[] = {DEMO_TXT_FIRMWARE, DEMO_TXT_PRODUCT, DEMO_TXT_FRAMEWORK,
@@ -560,7 +560,7 @@ void demo_settings_create(demo_ui_t *u)
         meter_text(u->version_back, 0, 0, LV_SYMBOL_LEFT, &lv_font_montserrat_24, 0xedf5f8);
     lv_obj_center(version_back_label);
     lv_obj_add_event_cb(u->version_back, version_close, LV_EVENT_CLICKED, u);
-    lv_obj_set_hidden(u->version_back, true);
+    lv_obj_add_flag(u->version_back, LV_OBJ_FLAG_HIDDEN);
     /* 用户设置第二页：只有"时钟"这一条目；点进去才是六个轮盘的对时界面。 */
     fill_clock_options();
     lv_obj_t *clock_card = u->settings_cards[DEMO_SETTINGS_CARD_CLOCK];
@@ -579,7 +579,7 @@ void demo_settings_create(demo_ui_t *u)
     lv_obj_remove_style_all(u->clock_group);
     lv_obj_set_pos(u->clock_group, 0, 0);
     lv_obj_set_size(u->clock_group, 600, 372);
-    lv_obj_set_scrollable(u->clock_group, false);
+    lv_obj_remove_flag(u->clock_group, LV_OBJ_FLAG_SCROLLABLE);
     for (unsigned field = 0; field < DEMO_CLOCK_FIELDS; ++field)
     {
         /* 列标只用单字母：轮盘本身显示数字，因此不需要额外的可翻译文案或字体子集。 */
@@ -597,7 +597,7 @@ void demo_settings_create(demo_ui_t *u)
         lv_obj_add_event_cb(roller, clock_roll, LV_EVENT_VALUE_CHANGED, u);
         u->clock_rollers[field] = roller;
     }
-    lv_obj_set_hidden(u->clock_group, true);
+    lv_obj_add_flag(u->clock_group, LV_OBJ_FLAG_HIDDEN);
     u->setting_status = meter_text(u->root, 218, 393, "", &lv_font_montserrat_16, 0xff856d);
 
     demo_pager_create(p, &u->settings_pager, (unsigned)DEMO_USER_SETTINGS_PAGES, turn_page, u);
@@ -606,7 +606,7 @@ void demo_settings_create(demo_ui_t *u)
 }
 void demo_settings_update(demo_ui_t *u)
 {
-    lv_obj_set_hidden(u->settings_note, u->selected_setting != 4);
+    ((u->selected_setting != 4) ? lv_obj_add_flag(u->settings_note, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->settings_note, LV_OBJ_FLAG_HIDDEN));
     const lv_font_t *font = u->view.language == METER_LANGUAGE_EN
                                 ? &lv_font_montserrat_20
                                 : meter_font_get(u->view.language, METER_FONT_LABEL);
@@ -637,17 +637,17 @@ void demo_settings_update(demo_ui_t *u)
     lv_obj_set_state(u->limit, LV_STATE_DISABLED, !u->view.limit_available);
     if (u->view.limit_available && !lv_obj_has_state(u->limit, LV_STATE_PRESSED))
         lv_slider_set_value(u->limit, (int)u->view.limit, LV_ANIM_OFF);
-    lv_obj_set_hidden(u->setting_status, u->page != DEMO_SETTINGS);
+    ((u->page != DEMO_SETTINGS) ? lv_obj_add_flag(u->setting_status, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->setting_status, LV_OBJ_FLAG_HIDDEN));
     lv_label_set_text(u->setting_status, u->action_failed ? demo_i18n_text(DEMO_TXT_ACCESS_DENIED) : "");
     demo_text_id_t access = u->view.admin_authorized  ? DEMO_TXT_ACCESS_ADMIN
                             : u->view.user_authorized ? DEMO_TXT_ACCESS_USER
                                                       : demo_i18n_feedback(u->view.auth_feedback);
     lv_label_set_text(u->password_status, demo_i18n_text(access));
-    lv_obj_set_hidden(u->admin_locked, u->view.admin_authorized);
+    ((u->view.admin_authorized) ? lv_obj_add_flag(u->admin_locked, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->admin_locked, LV_OBJ_FLAG_HIDDEN));
     const char *rates[] = {"125 kbit/s", "250 kbit/s", "500 kbit/s"};
     for (unsigned i = 0; i < DEMO_ADMIN_COUNT; ++i)
     {
-        lv_obj_set_hidden(u->admin_items[i], !u->view.admin_authorized);
+        ((!u->view.admin_authorized) ? lv_obj_add_flag(u->admin_items[i], LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->admin_items[i], LV_OBJ_FLAG_HIDDEN));
         unsigned value = u->view.admin_values[i];
         const char *text = i == 0   ? rates[value < 3 ? value : 0]
                            : i == 1 ? demo_i18n_text(value ? DEMO_TXT_POWER_MODE : DEMO_TXT_WORK_MODE)

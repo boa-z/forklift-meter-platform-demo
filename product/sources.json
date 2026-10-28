@@ -9,6 +9,7 @@
   ],
   "ui": [
     "ui/demo_i18n.c",
+    "i18n/generated/demo_i18n_data.c",
     "ui/demo_ui.c",
     "ui/demo_theme.c",
     "ui/dashboard.c",

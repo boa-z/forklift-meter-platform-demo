@@ -15,9 +15,9 @@ void demo_navigation_show(demo_ui_t *u, unsigned page)
     for (unsigned i = 0; i < DEMO_PAGE_COUNT; ++i)
     {
         if (i == page)
-            lv_obj_set_hidden(u->pages[i], false);
+            lv_obj_remove_flag(u->pages[i], LV_OBJ_FLAG_HIDDEN);
         else
-            lv_obj_set_hidden(u->pages[i], true);
+            lv_obj_add_flag(u->pages[i], LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_style_bg_color(u->nav[i], lv_color_hex(i == page ? 0xff7a00 : 0x17242c), 0);
         lv_obj_set_style_text_color(u->nav_icons[i], lv_color_hex(i == page ? 0xffffff : 0xb8c2c8), 0);
     }
@@ -38,7 +38,7 @@ void demo_navigation_create(demo_ui_t *u)
         lv_obj_set_style_pad_column(u->nav[i], 12, 0);
         lv_obj_set_flex_flow(u->nav[i], LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(u->nav[i], LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        lv_obj_set_scrollable(u->nav[i], false);
+        lv_obj_remove_flag(u->nav[i], LV_OBJ_FLAG_SCROLLABLE);
         const char *icons[] = {LV_SYMBOL_HOME, LV_SYMBOL_LIST, LV_SYMBOL_WARNING, LV_SYMBOL_SETTINGS};
         u->nav_icons[i] = meter_text(u->nav[i], 0, 0, icons[i], &lv_font_montserrat_20, 0xb8c2c8);
         u->nav_labels[i] = demo_text(u, u->nav[i], 0, 0, ids[i], &lv_font_montserrat_16, 0xe8f1f4);

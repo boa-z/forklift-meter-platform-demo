@@ -16,7 +16,7 @@ lv_obj_t *meter_text(lv_obj_t *parent, int x, int y, const char *text, const lv_
     lv_label_set_text(o, text);
     lv_obj_set_style_text_font(o, font, 0);
     lv_obj_set_style_text_color(o, lv_color_hex(color), 0);
-    lv_label_set_long_mode(o, LV_LABEL_LONG_MODE_CLIP);
+    lv_label_set_long_mode(o, LV_LABEL_LONG_CLIP);
     return o;
 }
 size_t meter_ui_object_count(lv_obj_t *root)

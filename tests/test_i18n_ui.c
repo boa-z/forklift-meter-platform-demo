@@ -95,7 +95,7 @@ int main(void)
                 CHECK(!strcmp(lv_label_get_text(ui->nav_labels[0]), language == METER_LANGUAGE_ZH ? "仪表盘" : "Dashboard"));
                 CHECK(!strcmp(lv_label_get_text(ui->monitor_labels[0]), language == METER_LANGUAGE_ZH ? "车速" : "Vehicle speed"));
                 CHECK(!strcmp(lv_label_get_text(lv_obj_get_child(ui->root, 0)), language == METER_LANGUAGE_ZH ? "现场仪表" : "FIELD"));
-                CHECK(!strcmp(lv_translation_get_language(), meter_i18n_language_code(language)));
+                CHECK(!strcmp(meter_i18n_language_code(meter_i18n_selected_language()), meter_i18n_language_code(language)));
                 for (unsigned i = 0; i < DEMO_TXT_COUNT; ++i)
                     CHECK(strlen(demo_i18n_text((demo_text_id_t)i)) > 0);
             }

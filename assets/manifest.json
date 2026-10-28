@@ -58,8 +58,7 @@
   ],
   "font": {
     "name": "Montserrat",
-    "source": "third_party/lvgl/src/font",
-    "commit": "80ca777e37a2b176770726a02e07a6fb79ef0b39",
+    "source": "packages/artinchip/lvgl-ui/lvgl_v9/lvgl/src/font (Luban-Lite SDK)",
     "license": "OFL-1.1",
     "modifications": "Uses upstream built-in generated fonts"
   },

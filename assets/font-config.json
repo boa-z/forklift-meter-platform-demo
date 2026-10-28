@@ -1,0 +1,5 @@
+{
+  "name": "Meter Demo CJK",
+  "prefix": "meter_demo_cjk",
+  "translations": "i18n/generated/demo_i18n_data.c"
+}

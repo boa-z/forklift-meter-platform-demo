@@ -1,0 +1,23 @@
+{
+  "comment": "Demo language resources; the persisted ids are the language table in ui/demo_i18n.c.",
+  "symbol": "demo_i18n_data",
+  "source": "en",
+  "default": "en",
+  "translations": "translations",
+  "output": "generated",
+  "sources": [
+    "ui"
+  ],
+  "languages": [
+    {
+      "id": 0,
+      "code": "en",
+      "plural": "one_other"
+    },
+    {
+      "id": 1,
+      "code": "zh-CN",
+      "plural": "other_only"
+    }
+  ]
+}

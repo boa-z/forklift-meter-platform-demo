@@ -30,9 +30,9 @@ bool meter_update_widget_create(meter_update_widget_t *w, lv_obj_t *parent)
     lv_obj_set_style_text_color(w->root, lv_color_hex(0xe9f2f5), 0);
     lv_obj_set_style_pad_all(w->root, 28, 0);
     lv_obj_set_style_pad_row(w->root, 18, 0);
-    lv_obj_set_scrollable(w->root, false);
-    lv_obj_set_clickable(w->root, true);
-    lv_obj_set_hidden(w->root, true);
+    lv_obj_remove_flag(w->root, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(w->root, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(w->root, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_flex_flow(w->root, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(w->root, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     w->preview = label_create(w->root);
@@ -59,10 +59,10 @@ void meter_update_widget_present(meter_update_widget_t *w, const meter_update_vi
         return;
     if (!v->visible)
     {
-        lv_obj_set_hidden(w->root, true);
+        lv_obj_add_flag(w->root, LV_OBJ_FLAG_HIDDEN);
         return;
     }
-    lv_obj_set_hidden(w->root, false);
+    lv_obj_remove_flag(w->root, LV_OBJ_FLAG_HIDDEN);
     lv_obj_t *labels[] = {w->title, w->phase, w->percent, w->versions, w->error, w->note, w->preview};
     for (unsigned i = 0; i < sizeof(labels) / sizeof(labels[0]); ++i)
     {
@@ -75,9 +75,9 @@ void meter_update_widget_present(meter_update_widget_t *w, const meter_update_vi
     text_set(w->note, t->note);
     text_set(w->preview, t->preview);
     if (t->preview && *t->preview)
-        lv_obj_set_hidden(w->preview, false);
+        lv_obj_remove_flag(w->preview, LV_OBJ_FLAG_HIDDEN);
     else
-        lv_obj_set_hidden(w->preview, true);
+        lv_obj_add_flag(w->preview, LV_OBJ_FLAG_HIDDEN);
     uint32_t percent = v->total ? (uint32_t)((uint64_t)v->received * 100u / v->total) : 0u;
     if (percent > 100u)
         percent = 100u;
@@ -94,10 +94,10 @@ void meter_update_widget_present(meter_update_widget_t *w, const meter_update_vi
     {
         lv_snprintf(text, sizeof(text), "%s: %u", t->error ? t->error : "", (unsigned)v->error);
         text_set(w->error, text);
-        lv_obj_set_hidden(w->error, false);
+        lv_obj_remove_flag(w->error, LV_OBJ_FLAG_HIDDEN);
     }
     else
-        lv_obj_set_hidden(w->error, true);
+        lv_obj_add_flag(w->error, LV_OBJ_FLAG_HIDDEN);
     lv_color_t color = lv_color_hex(v->state == METER_UPDATE_FAILED ? 0xff7979 : 0x5de5ca);
     if (lv_color_to_u32(lv_obj_get_style_text_color(w->phase, 0)) != lv_color_to_u32(color))
         lv_obj_set_style_text_color(w->phase, color, 0);

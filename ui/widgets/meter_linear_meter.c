@@ -39,7 +39,7 @@ meter_linear_meter_t *meter_linear_meter_create(lv_obj_t *p, int x, int y, int w
 {
     if (min >= max)
         return NULL;
-    meter_linear_meter_t *b = lv_zalloc(sizeof(*b));
+    meter_linear_meter_t *b = lv_malloc_zeroed(sizeof(*b));
     if (!b)
         return NULL;
     b->style = *meter_widget_style_default();
@@ -50,7 +50,7 @@ meter_linear_meter_t *meter_linear_meter_create(lv_obj_t *p, int x, int y, int w
     lv_obj_remove_style_all(b->root);
     lv_obj_set_pos(b->root, x, y);
     lv_obj_set_size(b->root, w, h);
-    lv_obj_set_scrollable(b->root, false);
+    lv_obj_remove_flag(b->root, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_event_cb(b->root, dispose, LV_EVENT_DELETE, b);
     b->bar = lv_bar_create(b->root);
     lv_obj_set_size(b->bar, 16, h - 8);
