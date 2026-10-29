@@ -1,4 +1,4 @@
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_widgets.h"
 #include <math.h>
 #include <stdio.h>
@@ -36,7 +36,7 @@ int main(void)
     lv_init();
     /* Without a display lv_obj_create(NULL) yields no screen and every object assertion is vacuous. */
     CHECK(lv_display_create(800, 480));
-    CHECK(meter_i18n_init());
+    CHECK(hmi_i18n_init());
     meter_gauge_config_t config = {0, 50, 135, 405, 26, 5, 100, 35, "km/h"};
     lv_obj_t *root = lv_obj_create(NULL);
     meter_ring_t *ring = meter_ring_create(root, 0, 0, 120, "%");
@@ -70,20 +70,20 @@ int main(void)
     /* 中英文未知读数只保留占位符，过期和错误仍有明确提示。 */
     for (unsigned language = 0; language < 2; ++language)
     {
-        (void)meter_i18n_set_language((meter_language_t)language);
-        meter_gauge_set_language(speed, (meter_language_t)language);
-        meter_ring_set_language(ring, (meter_language_t)language);
-        meter_gauge_set_state(speed, METER_VALUE_UNKNOWN);
-        meter_ring_set_state(ring, METER_VALUE_UNKNOWN);
+        (void)hmi_i18n_set_language((hmi_language_t)language);
+        meter_gauge_set_language(speed, (hmi_language_t)language);
+        meter_ring_set_language(ring, (hmi_language_t)language);
+        meter_gauge_set_state(speed, HMI_VALUE_UNKNOWN);
+        meter_ring_set_state(ring, HMI_VALUE_UNKNOWN);
         CHECK(contains_text(panel, "-- km/h") && contains_text(root, "-- kg"));
-        CHECK(!contains_text(panel, meter_widget_state_text(METER_VALUE_UNKNOWN)));
-        CHECK(!contains_text(root, meter_widget_state_text(METER_VALUE_UNKNOWN)));
-        meter_gauge_set_state(speed, METER_VALUE_STALE);
-        meter_ring_set_state(ring, METER_VALUE_ERROR);
-        CHECK(contains_text(panel, meter_widget_state_text(METER_VALUE_STALE)));
-        CHECK(contains_text(root, meter_widget_state_text(METER_VALUE_ERROR)));
+        CHECK(!contains_text(panel, meter_widget_state_text(HMI_VALUE_UNKNOWN)));
+        CHECK(!contains_text(root, meter_widget_state_text(HMI_VALUE_UNKNOWN)));
+        meter_gauge_set_state(speed, HMI_VALUE_STALE);
+        meter_ring_set_state(ring, HMI_VALUE_ERROR);
+        CHECK(contains_text(panel, meter_widget_state_text(HMI_VALUE_STALE)));
+        CHECK(contains_text(root, meter_widget_state_text(HMI_VALUE_ERROR)));
     }
-    (void)meter_i18n_set_language(METER_LANGUAGE_EN);
+    (void)hmi_i18n_set_language(HMI_LANGUAGE_EN);
     CHECK(meter_gauge_set_range(speed, 0, 32));
     meter_gauge_set_value(speed, 31.06855f);
     CHECK(!meter_gauge_set_range(speed, 0, 31.06855f));

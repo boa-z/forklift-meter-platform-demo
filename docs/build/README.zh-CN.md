@@ -9,20 +9,20 @@
 ```text
 git submodule update --init --recursive
 python -m pip install -r tools/protocol/requirements.txt -r tools/hil/requirements.txt -r tools/ota/requirements.txt
-cmake -S . -B build-demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMETER_PRODUCT_ROOT=products/demo -DMETER_ENABLE_UPDATE=ON
+cmake -S . -B build-demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DHMI_PRODUCT_ROOT=products/demo -DHMI_ENABLE_UPDATE=ON
 cmake --build build-demo --parallel
 ctest --test-dir build-demo --output-on-failure
 ```
 
-通过判据：配置选中 `products/demo`，编译生成 `meter-demo`，CTest 零失败。Windows 可执行文件为 `meter-demo.exe`，Linux 为 `meter-demo`。缺少 Product 清单时初始化 submodule；找不到 SDL2 时设置 `-DSDL2_DIR=PATH_TO_SDL2_CMAKE`，并把运行时 DLL 目录加入 PATH。
+通过判据：配置选中 `products/demo`，编译生成 `hmi-sim`，CTest 零失败。Windows 可执行文件为 `hmi-sim.exe`，Linux 为 `hmi-sim`。缺少 Product 清单时初始化 submodule；找不到 SDL2 时设置 `-DSDL2_DIR=PATH_TO_SDL2_CMAKE`，并把运行时 DLL 目录加入 PATH。
 
 ## 启动与检查
 
 以下为 Windows 示例，仍从 Framework 根目录执行：
 
 ```text
-./build-demo/meter-demo.exe --set-language chinese
-./build-demo/meter-demo.exe --hidden --frames 180 --scenario stale --set-language chinese --capture stale.bmp
+./build-demo/hmi-sim.exe --set-language chinese
+./build-demo/hmi-sim.exe --hidden --frames 180 --scenario stale --set-language chinese --capture stale.bmp
 ```
 
 Linux 去掉 `.exe`。交互模式打开 800×480 窗口，关闭窗口即可退出。自动截图使用固定帧数。`--page 0..3` 分别选择主界面、监测、故障、设置；`--subpage 1` 进入监测第二页。设置使用分类按钮，不存在第二个分页页。
@@ -35,7 +35,7 @@ Linux 去掉 `.exe`。交互模式打开 800×480 窗口，关闭窗口即可退
 
 ```text
 python -m pip install Pillow
-python products/demo/tools/capture_screenshots.py --binary build-demo/meter-demo.exe
+python products/demo/tools/capture_screenshots.py --binary build-demo/hmi-sim.exe
 python tools/check_docs_sync.py --root products/demo
 python products/demo/tools/check_docs.py
 ```
@@ -46,6 +46,6 @@ python products/demo/tools/check_docs.py
 
 ## 固件与 CAN OTA
 
-在 Framework SDK 集成中通过 `METER_PRODUCT_ROOT` 选择本 Product。SDK 镜像、更新包生成及 CAN 刷入遵循 Framework 的 `docs/build/build.md` 和 `docs/ota/can-update.md`。板级配置与传输属于 Framework/SDK，不在 Product 内复制第二套 OTA 实现。
+在 Framework SDK 集成中通过 `HMI_PRODUCT_ROOT` 选择本 Product。SDK 镜像、更新包生成及 CAN 刷入遵循 Framework 的 `docs/build/build.md` 和 `docs/ota/can-update.md`。板级配置与传输属于 Framework/SDK，不在 Product 内复制第二套 OTA 实现。
 
 图集更新画面仅为 `--update-preview download`，不生成更新包、不传输或安装固件。真实 OTA 结果需要板端更新前后身份和传输原始日志。

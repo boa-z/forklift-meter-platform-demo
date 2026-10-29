@@ -5,7 +5,7 @@ import json
 import argparse
 import os
 ROOT=Path(__file__).resolve().parents[1]
-PLATFORM=Path(os.environ.get('METER_PLATFORM_ROOT') or ROOT.parents[1])
+PLATFORM=Path(os.environ.get('HMI_PLATFORM_ROOT') or ROOT.parents[1])
 p=argparse.ArgumentParser(); p.add_argument('--product-root', type=Path, default=ROOT); ROOT=p.parse_args().product_root.resolve()
 m=json.loads((ROOT/'assets/manifest.json').read_text(encoding='utf-8'))
 for asset in m['icons']:
@@ -18,6 +18,6 @@ for license in ('Tabler-MIT.txt','Montserrat-OFL.txt','LVGL-MIT.txt'):
 assert (ROOT/'generated/demo_icons.c').is_file()
 assert m['font']['license']=='OFL-1.1'
 # 内置 Montserrat 字体来自固件链接的同一份 LVGL（SDK 的 lvgl-ui 包），不再有框架自己的 LVGL 版本可核对。
-lvgl=Path(os.environ.get('METER_LVGL_ROOT') or PLATFORM.parents[2]/'packages/artinchip/lvgl-ui/lvgl_v9/lvgl')
+lvgl=Path(os.environ.get('HMI_LVGL_ROOT') or PLATFORM.parents[2]/'packages/artinchip/lvgl-ui/lvgl_v9/lvgl')
 assert (lvgl/'src/font/lv_font_montserrat_14.c').is_file(),'SDK LVGL font source not found: '+str(lvgl)
 print('Asset provenance, dimensions, licenses and hashes PASS')

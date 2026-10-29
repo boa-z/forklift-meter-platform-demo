@@ -1,8 +1,8 @@
 #ifndef METER_WIDGETS_H
 #define METER_WIDGETS_H
 #include <stddef.h>
-#include "contracts/meter_domain.h"
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "contracts/hmi_domain.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include <lvgl.h>
 /* Demo 的示例控件。框架不提供可视控件：这些控件只为演示 Product 如何把数据、语言与字体接到 LVGL 上。 */
 /* 控件自己渲染的词汇（标签 meter.*），措辞由 Demo 的语言包提供。 */
@@ -19,12 +19,12 @@ typedef enum
 } meter_widget_text_id_t;
 const char *meter_widget_tag(meter_widget_text_id_t id);
 const char *meter_widget_text(meter_widget_text_id_t id);
-const char *meter_widget_state_text(meter_value_state_t state);
+const char *meter_widget_state_text(hmi_value_state_t state);
 /* 按设计字体的大小归类：行高 24 及以上算数值字体。 */
-meter_font_role_t meter_widget_font_role(const lv_font_t *font);
+hmi_font_role_t meter_widget_font_role(const lv_font_t *font);
 /* 读数 + 单位；过期时追加状态词，错误时用错误模板。 */
-void meter_widget_format_value(char *out, size_t size, float value, meter_value_state_t state, const char *unit,
-                               unsigned decimals, meter_language_t language);
+void meter_widget_format_value(char *out, size_t size, float value, hmi_value_state_t state, const char *unit,
+                               unsigned decimals, hmi_language_t language);
 typedef struct meter_gauge meter_gauge_t;
 typedef struct meter_ring meter_ring_t;
 typedef struct meter_linear_meter meter_linear_meter_t;
@@ -56,34 +56,34 @@ void meter_gauge_set_unit(meter_gauge_t *g, const char *unit);
 void meter_gauge_set_style(meter_gauge_t *g, const meter_widget_style_t *style);
 void meter_gauge_set_value(meter_gauge_t *g, float value);
 void meter_gauge_set_value_animated(meter_gauge_t *g, float value, uint32_t duration_ms);
-void meter_gauge_set_state(meter_gauge_t *g, meter_value_state_t state);
+void meter_gauge_set_state(meter_gauge_t *g, hmi_value_state_t state);
 meter_ring_t *meter_ring_create(lv_obj_t *parent, int x, int y, int diameter, const char *unit);
 meter_ring_t *meter_arc_bar_create(lv_obj_t *parent, int x, int y, int diameter, float start, float end,
                                    int stroke, const char *unit);
 bool meter_ring_set_range(meter_ring_t *r, float min, float max);
 void meter_ring_set_thresholds(meter_ring_t *r, float warning, float low);
 void meter_ring_set_value(meter_ring_t *r, float value);
-void meter_ring_set_state(meter_ring_t *r, meter_value_state_t state);
+void meter_ring_set_state(meter_ring_t *r, hmi_value_state_t state);
 void meter_ring_set_unit(meter_ring_t *r, const char *unit);
 void meter_ring_set_style(meter_ring_t *r, const meter_widget_style_t *style);
 meter_linear_meter_t *meter_linear_meter_create(lv_obj_t *parent, int x, int y, int width, int height,
                                                 float min, float max, const char *unit);
 void meter_linear_meter_set_value(meter_linear_meter_t *b, float value);
-void meter_linear_meter_set_state(meter_linear_meter_t *b, meter_value_state_t state);
+void meter_linear_meter_set_state(meter_linear_meter_t *b, hmi_value_state_t state);
 void meter_linear_meter_set_style(meter_linear_meter_t *b, const meter_widget_style_t *style);
 meter_status_t *meter_status_create(lv_obj_t *parent, int x, int y, const char *name,
                                     const lv_image_dsc_t *icon);
-void meter_status_set(meter_status_t *s, bool active, meter_value_state_t state);
+void meter_status_set(meter_status_t *s, bool active, hmi_value_state_t state);
 void meter_status_set_name(meter_status_t *s, const char *name);
 meter_value_label_t *meter_value_label_create(lv_obj_t *parent, int x, int y, const char *unit);
-void meter_value_label_set(meter_value_label_t *v, float value, meter_value_state_t state);
+void meter_value_label_set(meter_value_label_t *v, float value, hmi_value_state_t state);
 size_t meter_ui_object_count(lv_obj_t *root);
 lv_obj_t *meter_text(lv_obj_t *parent, int x, int y, const char *text, const lv_font_t *font, uint32_t color);
-void meter_gauge_set_language(meter_gauge_t *widget, meter_language_t language);
-void meter_ring_set_language(meter_ring_t *widget, meter_language_t language);
-void meter_linear_meter_set_language(meter_linear_meter_t *widget, meter_language_t language);
-void meter_value_label_set_language(meter_value_label_t *widget, meter_language_t language);
-void meter_status_set_language(meter_status_t *widget, meter_language_t language);
+void meter_gauge_set_language(meter_gauge_t *widget, hmi_language_t language);
+void meter_ring_set_language(meter_ring_t *widget, hmi_language_t language);
+void meter_linear_meter_set_language(meter_linear_meter_t *widget, hmi_language_t language);
+void meter_value_label_set_language(meter_value_label_t *widget, hmi_language_t language);
+void meter_status_set_language(meter_status_t *widget, hmi_language_t language);
 void meter_status_set_style(meter_status_t *widget, const meter_widget_style_t *style);
 void meter_value_label_set_style(meter_value_label_t *widget, const meter_widget_style_t *style);
 #endif

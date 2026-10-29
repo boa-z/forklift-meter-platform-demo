@@ -1,15 +1,15 @@
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_format.h"
 #include "ui/widgets/meter_widgets.h"
 #include <math.h>
 struct meter_value_label
 {
-    meter_language_t language;
+    hmi_language_t language;
     meter_widget_style_t style;
     lv_obj_t *label;
     const char *unit;
     float current, from, target;
-    meter_value_state_t state;
+    hmi_value_state_t state;
     char text[48];
 };
 static void redraw(meter_value_label_t *v)
@@ -46,10 +46,10 @@ meter_value_label_t *meter_value_label_create(lv_obj_t *p, int x, int y, const c
     lv_obj_add_event_cb(v->label, dispose, LV_EVENT_DELETE, v);
     return v;
 }
-void meter_value_label_set(meter_value_label_t *v, float value, meter_value_state_t state)
+void meter_value_label_set(meter_value_label_t *v, float value, hmi_value_state_t state)
 {
     if (!isfinite(value))
-        state = METER_VALUE_ERROR;
+        state = HMI_VALUE_ERROR;
     else if (v->target != value)
     {
         lv_anim_delete(v, animate);
@@ -68,10 +68,10 @@ void meter_value_label_set(meter_value_label_t *v, float value, meter_value_stat
     redraw(v);
 }
 
-void meter_value_label_set_language(meter_value_label_t *v, meter_language_t language)
+void meter_value_label_set_language(meter_value_label_t *v, hmi_language_t language)
 {
     v->language = language;
-    meter_i18n_apply_font(v->label, language, meter_widget_font_role(v->style.value_font));
+    hmi_i18n_apply_font(v->label, language, meter_widget_font_role(v->style.value_font));
     redraw(v);
 }
 void meter_value_label_set_style(meter_value_label_t *v, const meter_widget_style_t *style)

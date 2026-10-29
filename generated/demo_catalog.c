@@ -1,6 +1,6 @@
 /* 本文件由 tools/generate_catalog.py 自动生成，请勿手工修改；数据源：catalog/demo_catalog.json。 */
 #include "generated/demo_catalog.h"
-static const meter_signal_def_t signals[] = {
+static const hmi_signal_def_t signals[] = {
     {.id = 1, .key = "vehicle.speed", .unit = "km/h", .stale_ms = 750},
     {.id = 2, .key = "energy.soc", .unit = "%", .stale_ms = 1500},
     {.id = 3, .key = "lift.height", .unit = "m", .stale_ms = 750},
@@ -27,7 +27,7 @@ static const meter_signal_def_t signals[] = {
     {.id = 109, .key = "demo.settings.remote_lift", .unit = "", .stale_ms = 0},
     {.id = 110, .key = "demo.settings.remote_regen", .unit = "", .stale_ms = 0},
 };
-static const meter_parameter_def_t parameters[] = {
+static const hmi_parameter_def_t parameters[] = {
     {.id = 1, .key = "max_speed", .unit = "km/h", .min = 5.0f, .max = 50.0f, .initial = 25.0f},
     {.id = 2, .key = "acceleration_ramp", .unit = "s", .min = 1.0f, .max = 10.0f, .initial = 3.0f},
     {.id = 3, .key = "lift_limit", .unit = "m", .min = 1.0f, .max = 6.0f, .initial = 4.5f},
@@ -39,7 +39,7 @@ static const meter_parameter_def_t parameters[] = {
     {.id = 9, .key = "demo_cycle", .unit = "s", .min = 10.0f, .max = 120.0f, .initial = 40.0f},
     {.id = 10, .key = "steering_limit", .unit = "deg", .min = 10.0f, .max = 45.0f, .initial = 45.0f},
 };
-static const meter_monitor_def_t monitors[] = {
+static const hmi_monitor_def_t monitors[] = {
     {"Vehicle speed", "km/h", METER_SPEED},
     {"Battery charge", "%", METER_SOC},
     {"Lift height", "m", METER_HEIGHT},
@@ -55,7 +55,7 @@ static const meter_monitor_def_t monitors[] = {
     {"Charging", "", METER_CHARGING},
     {"Generic warning", "", METER_WARNING},
 };
-static const meter_fault_def_t faults[] = {
+static const hmi_fault_def_t faults[] = {
     {1, "low_charge", "Battery charge below demo threshold"},
     {2, "overtemperature", "Motor temperature advisory"},
     {3, "low_voltage", "Battery voltage advisory"},
@@ -67,7 +67,7 @@ static const meter_fault_def_t faults[] = {
     {9, "generic_warning", "Injected demonstration warning"},
     {10, "steering_advisory", "Steering angle advisory"},
 };
-const meter_catalog_t meter_demo_catalog = {
+const hmi_catalog_t meter_demo_catalog = {
     .signals = signals, .signal_count = sizeof(signals)/sizeof(signals[0]),
     .parameters = parameters, .parameter_count = sizeof(parameters)/sizeof(parameters[0]),
     .monitors = monitors, .monitor_count = sizeof(monitors)/sizeof(monitors[0]),

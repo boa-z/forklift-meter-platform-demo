@@ -32,7 +32,7 @@ def generate():
     banner = ("/* 本文件由 tools/generate_catalog.py 自动生成，请勿手工修改；"
               "数据源：catalog/demo_catalog.json。 */")
     header = ([banner, "#ifndef DEMO_CATALOG_H", "#define DEMO_CATALOG_H",
-               '#include "contracts/meter_domain.h"']
+               '#include "contracts/hmi_domain.h"']
               + declaration([(row[1], row[0]) for row in data["signals"]])
               + declaration([("DEMO_PARAMETER_" + row[1].upper(), row[0])
                              for row in data["parameters"]])
@@ -41,21 +41,21 @@ def generate():
                              ("DEMO_PARAMETER_SLOTS", len(data["parameters"])),
                              ("DEMO_MONITOR_SLOTS", len(data["monitors"])),
                              ("DEMO_FAULT_SLOTS", len(data["faults"]))])
-              + ["extern const meter_catalog_t meter_demo_catalog;", "#endif", ""])
+              + ["extern const hmi_catalog_t meter_demo_catalog;", "#endif", ""])
     lines = [banner, '#include "generated/demo_catalog.h"']
     def array(kind, key, formatter, rows):
         lines.append(f"static const {kind} {key}[] = {{")
         lines.extend("    {" + formatter(row) + "}," for row in rows)
         lines.append("};")
     q = lambda s: json.dumps(s, ensure_ascii=True)
-    array("meter_signal_def_t", "signals", lambda r: f".id = {r[0]}, .key = {q(r[2])}, .unit = {q(r[3])}, .stale_ms = {r[4]}", data["signals"])
-    array("meter_parameter_def_t", "parameters",
+    array("hmi_signal_def_t", "signals", lambda r: f".id = {r[0]}, .key = {q(r[2])}, .unit = {q(r[3])}, .stale_ms = {r[4]}", data["signals"])
+    array("hmi_parameter_def_t", "parameters",
           lambda r: f'.id = {r[0]}, .key = {q(r[1])}, .unit = {q(r[2])}, .min = {float(r[3])}f, .max = {float(r[4])}f, .initial = {float(r[5])}f',
           data["parameters"])
-    array("meter_monitor_def_t", "monitors", lambda r: f'{q(r[0])}, {q(r[1])}, {r[2]}', data["monitors"])
-    array("meter_fault_def_t", "faults", lambda r: f'{r[0]}, {q(r[1])}, {q(r[2])}', data["faults"])
+    array("hmi_monitor_def_t", "monitors", lambda r: f'{q(r[0])}, {q(r[1])}, {r[2]}', data["monitors"])
+    array("hmi_fault_def_t", "faults", lambda r: f'{r[0]}, {q(r[1])}, {q(r[2])}', data["faults"])
     lines += [
-        "const meter_catalog_t meter_demo_catalog = {",
+        "const hmi_catalog_t meter_demo_catalog = {",
         "    .signals = signals, .signal_count = sizeof(signals)/sizeof(signals[0]),",
         "    .parameters = parameters, .parameter_count = sizeof(parameters)/sizeof(parameters[0]),",
         "    .monitors = monitors, .monitor_count = sizeof(monitors)/sizeof(monitors[0]),",

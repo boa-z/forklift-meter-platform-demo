@@ -1,16 +1,16 @@
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_format.h"
 #include "ui/widgets/meter_widgets.h"
 #include <math.h>
 struct meter_ring
 {
-    meter_language_t language;
+    hmi_language_t language;
     meter_widget_style_t style;
     lv_obj_t *arc, *label, *validity;
     float min, max, value, warning, low;
     bool thresholds;
     const char *unit;
-    meter_value_state_t state;
+    hmi_value_state_t state;
     char text[48];
 };
 static void dispose(lv_event_t *e)
@@ -27,19 +27,19 @@ static void redraw(meter_ring_t *r)
 {
     float mapped = 0;
     meter_gauge_map(r->value, r->min, r->max, 0, 1000, &mapped);
-    bool missing = r->state == METER_VALUE_UNKNOWN || r->state == METER_VALUE_ERROR;
+    bool missing = r->state == HMI_VALUE_UNKNOWN || r->state == HMI_VALUE_ERROR;
     lv_arc_set_value(r->arc, missing ? 0 : (int)mapped);
     unsigned band = r->thresholds ? meter_threshold_band(r->value, r->warning, r->low) : 2;
     lv_color_t colors[] = {r->style.error, r->style.warning, r->style.primary};
-    lv_obj_set_style_arc_color(r->arc, r->state == METER_VALUE_STALE ? r->style.muted : colors[band],
+    lv_obj_set_style_arc_color(r->arc, r->state == HMI_VALUE_STALE ? r->style.muted : colors[band],
                                LV_PART_INDICATOR);
-    meter_widget_format_value(r->text, sizeof(r->text), r->value, missing ? r->state : METER_VALUE_VALID, r->unit,
+    meter_widget_format_value(r->text, sizeof(r->text), r->value, missing ? r->state : HMI_VALUE_VALID, r->unit,
                        0, r->language);
     lv_label_set_text_static(r->label, r->text);
     lv_obj_center(r->label);
     /* 占位符已表达未知；仍保留过期和传感器错误提示。 */
     lv_label_set_text_static(r->validity,
-                             r->state == METER_VALUE_VALID || r->state == METER_VALUE_UNKNOWN
+                             r->state == HMI_VALUE_VALID || r->state == HMI_VALUE_UNKNOWN
                                  ? "" : meter_widget_state_text(r->state));
     lv_obj_align(r->validity, LV_ALIGN_CENTER, 0, 24);
 }
@@ -101,12 +101,12 @@ void meter_ring_set_thresholds(meter_ring_t *r, float warning, float low)
 void meter_ring_set_value(meter_ring_t *r, float value)
 {
     if (!isfinite(value))
-        r->state = METER_VALUE_ERROR;
+        r->state = HMI_VALUE_ERROR;
     else
         r->value = fmaxf(r->min, fminf(r->max, value));
     redraw(r);
 }
-void meter_ring_set_state(meter_ring_t *r, meter_value_state_t state)
+void meter_ring_set_state(meter_ring_t *r, hmi_value_state_t state)
 {
     r->state = state;
     redraw(r);
@@ -120,14 +120,14 @@ void meter_ring_set_style(meter_ring_t *r, const meter_widget_style_t *style)
 {
     if (style) r->style = *style;
     apply_style(r);
-    meter_i18n_apply_font(r->label, r->language, meter_widget_font_role(r->style.value_font));
+    hmi_i18n_apply_font(r->label, r->language, meter_widget_font_role(r->style.value_font));
     redraw(r);
 }
 
-void meter_ring_set_language(meter_ring_t *r, meter_language_t language)
+void meter_ring_set_language(meter_ring_t *r, hmi_language_t language)
 {
     r->language = language;
-    meter_i18n_apply_font(r->label, language, meter_widget_font_role(r->style.value_font));
-    meter_i18n_apply_font(r->validity, language, meter_widget_font_role(r->style.label_font));
+    hmi_i18n_apply_font(r->label, language, meter_widget_font_role(r->style.value_font));
+    hmi_i18n_apply_font(r->validity, language, meter_widget_font_role(r->style.label_font));
     redraw(r);
 }

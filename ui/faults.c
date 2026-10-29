@@ -32,9 +32,9 @@ void demo_faults_create(demo_ui_t *u)
 }
 void demo_faults_update(demo_ui_t *u)
 {
-    const lv_font_t *font = u->view.language == METER_LANGUAGE_EN
+    const lv_font_t *font = u->view.language == HMI_LANGUAGE_EN
                                 ? &lv_font_montserrat_20
-                                : meter_font_get(u->view.language, METER_FONT_LABEL);
+                                : hmi_font_get(u->view.language, HMI_FONT_LABEL);
     for (size_t i = 0; i < DEMO_FAULT_SLOTS; ++i)
     {
         bool active = u->view.faults[i].active;

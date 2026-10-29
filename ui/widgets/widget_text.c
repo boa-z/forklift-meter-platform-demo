@@ -1,6 +1,6 @@
 #include "ui/widgets/meter_widgets.h"
 #include "ui/widgets/meter_format.h"
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,37 +15,37 @@ const char *meter_widget_tag(meter_widget_text_id_t id)
 }
 const char *meter_widget_text(meter_widget_text_id_t id)
 {
-    return meter_i18n_tr(meter_widget_tag(id));
+    return hmi_i18n_tr(meter_widget_tag(id));
 }
-const char *meter_widget_state_text(meter_value_state_t state)
+const char *meter_widget_state_text(hmi_value_state_t state)
 {
-    return meter_widget_text(state == METER_VALUE_UNKNOWN ? METER_WIDGET_TXT_VALIDITY_UNKNOWN
-                             : state == METER_VALUE_STALE ? METER_WIDGET_TXT_VALIDITY_STALE
-                             : state == METER_VALUE_ERROR ? METER_WIDGET_TXT_VALIDITY_ERROR
+    return meter_widget_text(state == HMI_VALUE_UNKNOWN ? METER_WIDGET_TXT_VALIDITY_UNKNOWN
+                             : state == HMI_VALUE_STALE ? METER_WIDGET_TXT_VALIDITY_STALE
+                             : state == HMI_VALUE_ERROR ? METER_WIDGET_TXT_VALIDITY_ERROR
                                                           : METER_WIDGET_TXT_VALIDITY_LIVE);
 }
-meter_font_role_t meter_widget_font_role(const lv_font_t *font)
+hmi_font_role_t meter_widget_font_role(const lv_font_t *font)
 {
-    return font && font->line_height >= 24 ? METER_FONT_VALUE : METER_FONT_LABEL;
+    return font && font->line_height >= 24 ? HMI_FONT_VALUE : HMI_FONT_LABEL;
 }
-void meter_widget_format_value(char *out, size_t size, float value, meter_value_state_t state, const char *unit,
-                               unsigned decimals, meter_language_t language)
+void meter_widget_format_value(char *out, size_t size, float value, hmi_value_state_t state, const char *unit,
+                               unsigned decimals, hmi_language_t language)
 {
     if (!out || !size)
         return;
-    if (state == METER_VALUE_ERROR || (state != METER_VALUE_UNKNOWN && !isfinite(value)))
+    if (state == HMI_VALUE_ERROR || (state != HMI_VALUE_UNKNOWN && !isfinite(value)))
     {
-        const meter_i18n_arg_t argument = meter_i18n_arg_str(unit);
-        (void)meter_i18n_format(out, size, meter_i18n_tr_in(language, tags[METER_WIDGET_TXT_VALUE_ERROR]),
+        const hmi_i18n_arg_t argument = hmi_i18n_arg_str(unit);
+        (void)hmi_i18n_format(out, size, hmi_i18n_tr_in(language, tags[METER_WIDGET_TXT_VALUE_ERROR]),
                                 &argument, 1u);
         return;
     }
-    meter_format_value(out, size, value, state == METER_VALUE_STALE ? METER_VALUE_VALID : state, unit, decimals);
-    if (state == METER_VALUE_STALE)
+    meter_format_value(out, size, value, state == HMI_VALUE_STALE ? HMI_VALUE_VALID : state, unit, decimals);
+    if (state == HMI_VALUE_STALE)
     {
         size_t used = strlen(out);
         if (used < size)
             snprintf(out + used, size - used, " / %s",
-                     meter_i18n_tr_in(language, tags[METER_WIDGET_TXT_VALIDITY_STALE]));
+                     hmi_i18n_tr_in(language, tags[METER_WIDGET_TXT_VALIDITY_STALE]));
     }
 }

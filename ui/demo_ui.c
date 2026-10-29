@@ -62,7 +62,7 @@ void demo_pager_create(lv_obj_t *parent, demo_pager_t *pager, unsigned count, lv
     pager->indicator = meter_text(bar, 0, 0, "", &lv_font_montserrat_20, 0xedf5f8);
     (void)demo_pager_select(pager, 0);
 }
-void *demo_ui_create(void *parent, const meter_ui_actions_t *actions)
+void *demo_ui_create(void *parent, const hmi_ui_actions_t *actions)
 {
     demo_ui_t *u = lv_malloc(sizeof(*u));
     if (!u)
@@ -111,14 +111,14 @@ void *demo_ui_create(void *parent, const meter_ui_actions_t *actions)
     meter_update_widget_create(&u->update_widget, u->root);
     return u;
 }
-void demo_ui_present(void *context, const meter_snapshot_t *snapshot, uint32_t elapsed)
+void demo_ui_present(void *context, const hmi_snapshot_t *snapshot, uint32_t elapsed)
 {
     demo_ui_t *u = context;
     (void)elapsed;
     demo_presentation_build(snapshot, &u->view);
     if (!u->language_presented || u->presented_language != u->view.language)
     {
-        (void)meter_i18n_set_language(u->view.language);
+        (void)hmi_i18n_set_language(u->view.language);
         u->language_presented = true;
         u->presented_language = u->view.language;
     }
@@ -126,7 +126,7 @@ void demo_ui_present(void *context, const meter_snapshot_t *snapshot, uint32_t e
     demo_text_id_t state = states[u->view.link];
     strcpy(u->connection_text, demo_i18n_text(state));
     lv_label_set_text_static(u->connection, u->connection_text);
-    meter_i18n_apply_font(u->connection, u->view.language, METER_FONT_LABEL);
+    hmi_i18n_apply_font(u->connection, u->view.language, HMI_FONT_LABEL);
     /* 顶栏时钟取真实墙上时钟，不再用 lv_tick_get() 伪造运行时长：
        后者在实板上会被误读成当前时间，且与 RTC 无任何关系。 */
     (void)demo_clock_text(u->clock_text, sizeof(u->clock_text));
@@ -165,7 +165,7 @@ unsigned demo_ui_active_subpage(const void *context)
     }
 }
 
-static void present_update(void *context, const meter_update_view_t *view, meter_language_t language,
+static void present_update(void *context, const hmi_update_view_t *view, hmi_language_t language,
                            bool preview)
 {
     demo_ui_t *u = context;
@@ -176,11 +176,11 @@ static void present_update(void *context, const meter_update_view_t *view, meter
     demo_text_id_t phase = DEMO_TXT_OTA_FAILED;
     if ((unsigned)view->state < sizeof(phases) / sizeof(phases[0]))
         phase = phases[view->state];
-    (void)meter_i18n_set_language(language);
+    (void)hmi_i18n_set_language(language);
     meter_update_widget_text_t text = {
         demo_i18n_text(DEMO_TXT_OTA_TITLE),
         demo_i18n_text(phase),
-        demo_i18n_text(view->state == METER_UPDATE_ABORTED || view->state == METER_UPDATE_FAILED
+        demo_i18n_text(view->state == HMI_UPDATE_ABORTED || view->state == HMI_UPDATE_FAILED
                            ? DEMO_TXT_OTA_STOPPED
                            : DEMO_TXT_OTA_NOTE),
         demo_i18n_text(DEMO_TXT_OTA_CURRENT),
@@ -189,11 +189,11 @@ static void present_update(void *context, const meter_update_view_t *view, meter
         preview ? demo_i18n_text(DEMO_TXT_OTA_PREVIEW) : ""};
     meter_update_widget_present(&u->update_widget, view, &text, language);
 }
-void demo_ui_update(void *ui, const meter_update_view_t *view, meter_language_t language)
+void demo_ui_update(void *ui, const hmi_update_view_t *view, hmi_language_t language)
 {
     present_update(ui, view, language, false);
 }
-void demo_ui_update_preview(void *ui, const meter_update_view_t *view, meter_language_t language)
+void demo_ui_update_preview(void *ui, const hmi_update_view_t *view, hmi_language_t language)
 {
     present_update(ui, view, language, true);
 }

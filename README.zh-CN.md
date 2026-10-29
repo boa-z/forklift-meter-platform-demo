@@ -2,7 +2,7 @@
 
 > [English](README.md)
 
-面向 forklift-meter-platform 的完整公开合成 Product，展示 800×480 原生 LVGL 仪表、中英双语、合成 CAN、本机设置及可追溯验证。它不包含客户协议，也不宣称通过车辆验收。
+面向 luban-lite-hmi 的完整公开合成 Product，展示 800×480 原生 LVGL 仪表、中英双语、合成 CAN、本机设置及可追溯验证。它不包含客户协议，也不宣称通过车辆验收。
 
 ## 从这里开始
 
@@ -15,7 +15,7 @@
 
 ## 仓库边界
 
-本仓库管理 `product/sources.json`、目录、协议、应用、UI、字体、资源、测试和文档。消费它的 Framework 管理通用运行时与构建工具。Framework 通过 `products/demo` 固定引用本仓库；构建选择 `METER_PRODUCT_ROOT=products/demo`，也可传入其他检出的绝对路径。本仓库不另建第二套独立 CMake 构建。
+本仓库管理 `product/sources.json`、目录、协议、应用、UI、字体、资源、测试和文档。消费它的 Framework 管理通用运行时与构建工具。Framework 通过 `products/demo` 固定引用本仓库；构建选择 `HMI_PRODUCT_ROOT=products/demo`，也可传入其他检出的绝对路径。本仓库不另建第二套独立 CMake 构建。
 
 | 目录 | 职责 |
 |---|---|

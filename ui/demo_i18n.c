@@ -141,13 +141,13 @@ _Static_assert(sizeof(tags) / sizeof(tags[0]) == DEMO_TXT_COUNT + 1, "demo tag c
 #define DEMO_MONITOR_COUNT (DEMO_TXT_FAULT_0 - DEMO_TXT_MONITOR_0)
 #define DEMO_FAULT_COUNT (DEMO_TXT_COUNT - DEMO_TXT_FAULT_0)
 /* 语言表：编号即持久化语言字节。英文保持控件设计时的字体，中文使用仓库内固定的子集字体。 */
-static const meter_i18n_language_t demo_languages[] = {
-    {METER_LANGUAGE_EN, METER_LANGUAGE_CODE_EN, NULL, NULL},
-    {METER_LANGUAGE_ZH, METER_LANGUAGE_CODE_ZH, &meter_demo_cjk_20, &meter_demo_cjk_20}};
+static const hmi_i18n_language_t demo_languages[] = {
+    {HMI_LANGUAGE_EN, HMI_LANGUAGE_CODE_EN, NULL, NULL},
+    {HMI_LANGUAGE_ZH, HMI_LANGUAGE_CODE_ZH, &meter_demo_cjk_20, &meter_demo_cjk_20}};
 bool demo_i18n_init(void)
 {
-    return meter_i18n_register_languages(demo_languages, sizeof(demo_languages) / sizeof(demo_languages[0])) &&
-           meter_i18n_register_pack(demo_i18n_data_pack);
+    return hmi_i18n_register_languages(demo_languages, sizeof(demo_languages) / sizeof(demo_languages[0])) &&
+           hmi_i18n_register_pack(demo_i18n_data_pack);
 }
 const char *demo_i18n_tag(demo_text_id_t id)
 {
@@ -155,11 +155,11 @@ const char *demo_i18n_tag(demo_text_id_t id)
 }
 const char *demo_i18n_text(demo_text_id_t id)
 {
-    return meter_i18n_tr(demo_i18n_tag(id));
+    return hmi_i18n_tr(demo_i18n_tag(id));
 }
 void demo_i18n_bind_label(lv_obj_t *label, demo_text_id_t id)
 {
-    meter_i18n_bind_text(label, demo_i18n_tag(id), meter_widget_font_role(lv_obj_get_style_text_font(label, 0)));
+    hmi_i18n_bind_text(label, demo_i18n_tag(id), meter_widget_font_role(lv_obj_get_style_text_font(label, 0)));
 }
 const char *demo_i18n_monitor_label(size_t i)
 {

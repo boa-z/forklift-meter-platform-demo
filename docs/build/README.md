@@ -9,20 +9,20 @@ Run the following commands in the consuming Framework root, where this repositor
 ```text
 git submodule update --init --recursive
 python -m pip install -r tools/protocol/requirements.txt -r tools/hil/requirements.txt -r tools/ota/requirements.txt
-cmake -S . -B build-demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DMETER_PRODUCT_ROOT=products/demo -DMETER_ENABLE_UPDATE=ON
+cmake -S . -B build-demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DHMI_PRODUCT_ROOT=products/demo -DHMI_ENABLE_UPDATE=ON
 cmake --build build-demo --parallel
 ctest --test-dir build-demo --output-on-failure
 ```
 
-Pass criteria: configuration selects `products/demo`, build produces `meter-demo`, and CTest reports zero failures. Windows uses `meter-demo.exe`; Linux uses `meter-demo`. If the Product manifest is missing, initialize the submodule. If SDL2 cannot be found, provide `-DSDL2_DIR=PATH_TO_SDL2_CMAKE` and put its runtime DLL directory on PATH.
+Pass criteria: configuration selects `products/demo`, build produces `hmi-sim`, and CTest reports zero failures. Windows uses `hmi-sim.exe`; Linux uses `hmi-sim`. If the Product manifest is missing, initialize the submodule. If SDL2 cannot be found, provide `-DSDL2_DIR=PATH_TO_SDL2_CMAKE` and put its runtime DLL directory on PATH.
 
 ## Launch and inspect
 
 Windows examples, from the same Framework root:
 
 ```text
-./build-demo/meter-demo.exe --set-language chinese
-./build-demo/meter-demo.exe --hidden --frames 180 --scenario stale --set-language chinese --capture stale.bmp
+./build-demo/hmi-sim.exe --set-language chinese
+./build-demo/hmi-sim.exe --hidden --frames 180 --scenario stale --set-language chinese --capture stale.bmp
 ```
 
 On Linux remove `.exe`. Interactive mode opens an 800×480 window; close it to exit. Automated capture uses a fixed frame count. `--page 0..3` selects dashboard, monitor, faults and settings; `--subpage 1` reaches the second monitor page. Settings uses category buttons and is not a second pager page.
@@ -35,7 +35,7 @@ Build the current sources first. Use host Python with Pillow available and the S
 
 ```text
 python -m pip install Pillow
-python products/demo/tools/capture_screenshots.py --binary build-demo/meter-demo.exe
+python products/demo/tools/capture_screenshots.py --binary build-demo/hmi-sim.exe
 python tools/check_docs_sync.py --root products/demo
 python products/demo/tools/check_docs.py
 ```
@@ -46,6 +46,6 @@ The exporter runs one SDL2 process per gallery image using the dummy video drive
 
 ## Firmware and CAN OTA
 
-Select this Product with `METER_PRODUCT_ROOT` in the Framework SDK integration. Follow Framework `docs/build/build.md` and `docs/ota/can-update.md` for SDK image creation, package creation and CAN installation. Board setup and transport are Framework/SDK responsibilities; do not copy a second OTA implementation into this Product.
+Select this Product with `HMI_PRODUCT_ROOT` in the Framework SDK integration. Follow Framework `docs/build/build.md` and `docs/ota/can-update.md` for SDK image creation, package creation and CAN installation. Board setup and transport are Framework/SDK responsibilities; do not copy a second OTA implementation into this Product.
 
 The gallery's update view is only `--update-preview download`; it neither constructs an OTA package nor transfers or installs firmware. A real OTA result needs the board's before/after identity and captured transport logs.

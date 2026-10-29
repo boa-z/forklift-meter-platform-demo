@@ -1,7 +1,7 @@
 #ifndef DEMO_PRESENTATION_H
 #define DEMO_PRESENTATION_H
-#include "contracts/meter_domain.h"
-#include "contracts/meter_wall_clock.h"
+#include "contracts/hmi_domain.h"
+#include "contracts/hmi_wall_clock.h"
 #include "generated/demo_catalog.h"
 #include <stddef.h>
 enum { DEMO_REMOTE_COUNT = 4, DEMO_ADMIN_COUNT = 4, DEMO_CLOCK_FIELDS = 6 };
@@ -43,7 +43,7 @@ typedef enum
 typedef struct
 {
     float value;
-    meter_value_state_t state;
+    hmi_value_state_t state;
 } demo_readout_t;
 typedef enum
 {
@@ -71,8 +71,8 @@ typedef struct
 {
     const char *firmware_version, *framework_revision;
     uint32_t revision;
-    meter_profile_t profile;
-    meter_language_t language;
+    hmi_profile_t profile;
+    hmi_language_t language;
     bool imperial;
     uint8_t brightness;
     bool limit_available;
@@ -91,7 +91,7 @@ typedef struct
 } demo_presentation_t;
 /* 对已有一致快照做纯投影；Product 目录不可变。
  * 在接收所有者的快照副本上调用，不建立第二套发布机制。 */
-void demo_presentation_build(const meter_snapshot_t *snapshot, demo_presentation_t *out);
+void demo_presentation_build(const hmi_snapshot_t *snapshot, demo_presentation_t *out);
 /**
  * @brief 顶栏时钟文本：成功写入 "HH:MM"，时钟不可信时写入 "--:--" 并返回 false。
  *
@@ -104,11 +104,11 @@ bool demo_clock_text(char *out, size_t size);
  * 返回读数是否可信，调用方据此决定是否提示"尚未对时"。无论返回值如何，
  * local_out 的字段都已填好且自洽，可以直接作为轮盘的起点。
  */
-bool demo_clock_fields(meter_wall_time_t *local_out);
-meter_action_t demo_speed_limit_intent(float value);
-meter_action_t demo_settings_intent(demo_settings_intent_t intent, float value);
-meter_action_t demo_remote_intent(unsigned row, float value);
-meter_action_t demo_admin_intent(unsigned row, float value);
+bool demo_clock_fields(hmi_wall_time_t *local_out);
+hmi_action_t demo_speed_limit_intent(float value);
+hmi_action_t demo_settings_intent(demo_settings_intent_t intent, float value);
+hmi_action_t demo_remote_intent(unsigned row, float value);
+hmi_action_t demo_admin_intent(unsigned row, float value);
 /** @brief 对时意图：一次携带一个字段的值，App 侧据此只替换该字段。 */
-meter_action_t demo_clock_intent(demo_clock_field_t field, float value);
+hmi_action_t demo_clock_intent(demo_clock_field_t field, float value);
 #endif

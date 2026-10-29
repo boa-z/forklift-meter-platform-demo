@@ -6,7 +6,7 @@ import subprocess
 import sys
 import tempfile
 import can
-ROOT = Path(os.environ['METER_PLATFORM_ROOT'])
+ROOT = Path(os.environ['HMI_PLATFORM_ROOT'])
 PRODUCT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools/protocol'))
 from replay import replay

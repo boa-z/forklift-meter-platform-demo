@@ -52,8 +52,8 @@ bool meter_update_widget_create(meter_update_widget_t *w, lv_obj_t *parent)
     lv_obj_set_style_text_color(w->note, lv_color_hex(0x9cb5c4), 0);
     return true;
 }
-void meter_update_widget_present(meter_update_widget_t *w, const meter_update_view_t *v,
-                                 const meter_update_widget_text_t *t, meter_language_t language)
+void meter_update_widget_present(meter_update_widget_t *w, const hmi_update_view_t *v,
+                                 const meter_update_widget_text_t *t, hmi_language_t language)
 {
     if (!w || !w->root || !v || !t)
         return;
@@ -66,7 +66,7 @@ void meter_update_widget_present(meter_update_widget_t *w, const meter_update_vi
     lv_obj_t *labels[] = {w->title, w->phase, w->percent, w->versions, w->error, w->note, w->preview};
     for (unsigned i = 0; i < sizeof(labels) / sizeof(labels[0]); ++i)
     {
-        const lv_font_t *font = meter_font_get(language, i < 3 ? METER_FONT_VALUE : METER_FONT_LABEL);
+        const lv_font_t *font = hmi_font_get(language, i < 3 ? HMI_FONT_VALUE : HMI_FONT_LABEL);
         if (font && lv_obj_get_style_text_font(labels[i], 0) != font)
             lv_obj_set_style_text_font(labels[i], font, 0);
     }
@@ -98,7 +98,7 @@ void meter_update_widget_present(meter_update_widget_t *w, const meter_update_vi
     }
     else
         lv_obj_add_flag(w->error, LV_OBJ_FLAG_HIDDEN);
-    lv_color_t color = lv_color_hex(v->state == METER_UPDATE_FAILED ? 0xff7979 : 0x5de5ca);
+    lv_color_t color = lv_color_hex(v->state == HMI_UPDATE_FAILED ? 0xff7979 : 0x5de5ca);
     if (lv_color_to_u32(lv_obj_get_style_text_color(w->phase, 0)) != lv_color_to_u32(color))
         lv_obj_set_style_text_color(w->phase, color, 0);
 }

@@ -1,6 +1,6 @@
 #include "services/settings_app.h"
 #include "application/presentation.h"
-#include "contracts/meter_time.h"
+#include "contracts/hmi_time.h"
 #include <math.h>
 
 /* 公开演示凭据只证明授权流程，不作为真实车辆身份或安全策略。 */
@@ -23,7 +23,7 @@ static float remote_values[DEMO_REMOTE_COUNT] = {25, 3, 4, 30};
 
 static bool allows(unsigned permission, uint32_t now_ms)
 {
-    return (grant.permissions & permission) != 0u && !meter_time_reached(now_ms, grant.expires_ms);
+    return (grant.permissions & permission) != 0u && !hmi_time_reached(now_ms, grant.expires_ms);
 }
 static void revoke(void)
 {
@@ -36,12 +36,12 @@ void demo_settings_reset(uint32_t generation)
     revoke();
     auth_feedback = DEMO_FEEDBACK_IDLE;
 }
-bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *action, uint32_t now_ms)
+bool demo_settings_action(hmi_snapshot_t *snapshot, const hmi_action_t *action, uint32_t now_ms)
 {
     if (!snapshot || !action || !isfinite(action->value))
         return false;
     app_now = now_ms;
-    if (action->kind != METER_ACTION_PRODUCT)
+    if (action->kind != HMI_ACTION_PRODUCT)
         return true;
     if (action->id == DEMO_INTENT_LOGOUT)
     {
@@ -71,7 +71,7 @@ bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *acti
             return false;
         /* 以当前读数为基准只替换一个字段：有可信读数就用它，否则用固定基准日。
            字段逐个落盘，所以每一次提交本身都是一个自洽的完整时刻。 */
-        meter_wall_time_t local;
+        hmi_wall_time_t local;
         (void)demo_clock_fields(&local);
         const unsigned value = (unsigned)raw;
         switch ((demo_clock_field_t)field)
@@ -111,14 +111,14 @@ bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *acti
             return false;
         }
         /* 月长与闰年由公共层判定：非法日期（如 2 月 30 日）零偏移往返后会被归一化成别的日子。 */
-        meter_wall_time_t roundtrip;
-        if (!meter_wall_time_shift(&local, 0, &roundtrip) || roundtrip.year != local.year ||
+        hmi_wall_time_t roundtrip;
+        if (!hmi_wall_time_shift(&local, 0, &roundtrip) || roundtrip.year != local.year ||
             roundtrip.month != local.month || roundtrip.day != local.day)
             return false;
-        meter_wall_time_t utc;
+        hmi_wall_time_t utc;
         /* 界面编辑的是本地时间，写回要按同一偏移换算回 UTC。 */
-        return meter_wall_time_shift(&local, -DEMO_UTC_OFFSET_SECONDS, &utc) &&
-               meter_wall_clock_write(&utc);
+        return hmi_wall_time_shift(&local, -DEMO_UTC_OFFSET_SECONDS, &utc) &&
+               hmi_wall_clock_write(&utc);
     }
     if (!allows(ADMIN_PERMISSION, now_ms))
     {
@@ -135,7 +135,7 @@ bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *acti
         if (row == 0)
         {
             /* App 更新待重启配置；运行中不重配设备，NVM 仍由统一服务持久化。 */
-            meter_can_rate_t rate = (meter_can_rate_t)(unsigned)action->value;
+            hmi_can_rate_t rate = (hmi_can_rate_t)(unsigned)action->value;
             if (snapshot->can_rate != rate)
             {
                 snapshot->can_rate = rate;
@@ -158,7 +158,7 @@ bool demo_settings_action(meter_snapshot_t *snapshot, const meter_action_t *acti
     }
     return false;
 }
-void demo_settings_run(uint32_t now_ms, const meter_command_port_t *commands)
+void demo_settings_run(uint32_t now_ms, const hmi_command_port_t *commands)
 {
     (void)commands;
     app_now = now_ms;
@@ -168,25 +168,25 @@ void demo_settings_run(uint32_t now_ms, const meter_command_port_t *commands)
         auth_feedback = DEMO_FEEDBACK_EXPIRED;
     }
 }
-static void publish(meter_snapshot_t *snapshot, meter_signal_id_t id, float value)
+static void publish(hmi_snapshot_t *snapshot, hmi_signal_id_t id, float value)
 {
-    size_t index = meter_catalog_index(snapshot->catalog, id);
+    size_t index = hmi_catalog_index(snapshot->catalog, id);
     if (index >= snapshot->catalog->signal_count)
         return;
-    meter_value_t *slot = &snapshot->signals[index];
-    if (slot->state != METER_VALUE_VALID || slot->value != value)
+    hmi_value_t *slot = &snapshot->signals[index];
+    if (slot->state != HMI_VALUE_VALID || slot->value != value)
         ++snapshot->revision;
-    *slot = (meter_value_t){value, app_now, METER_VALUE_VALID, METER_SOURCE_NONE};
+    *slot = (hmi_value_t){value, app_now, HMI_VALUE_VALID, HMI_SOURCE_NONE};
 }
-void demo_settings_publish(meter_snapshot_t *snapshot)
+void demo_settings_publish(hmi_snapshot_t *snapshot)
 {
     bool user = allows(USER_PERMISSION, app_now);
     bool admin = allows(ADMIN_PERMISSION, app_now);
     publish(snapshot, DEMO_ACCESS_ROLE, admin ? 2 : user ? 1 : 0);
     publish(snapshot, DEMO_ACCESS_RESULT, (float)auth_feedback);
     publish(snapshot, DEMO_REMOTE_RESULT, (float)parameter_feedback);
-    const meter_signal_id_t admin_ids[] = {DEMO_ADMIN_CAN, DEMO_ADMIN_HOURS, DEMO_ADMIN_SPEED, DEMO_ADMIN_MEMORY};
-    const meter_signal_id_t remote_ids[] = {DEMO_REMOTE_SPEED, DEMO_REMOTE_RAMP, DEMO_REMOTE_LIFT, DEMO_REMOTE_REGEN};
+    const hmi_signal_id_t admin_ids[] = {DEMO_ADMIN_CAN, DEMO_ADMIN_HOURS, DEMO_ADMIN_SPEED, DEMO_ADMIN_MEMORY};
+    const hmi_signal_id_t remote_ids[] = {DEMO_REMOTE_SPEED, DEMO_REMOTE_RAMP, DEMO_REMOTE_LIFT, DEMO_REMOTE_REGEN};
     for (unsigned i = 0; i < DEMO_ADMIN_COUNT; ++i)
         publish(snapshot, admin_ids[i], i == 0 ? (float)snapshot->can_rate : (float)admin_values[i]);
     for (unsigned i = 0; i < DEMO_REMOTE_COUNT; ++i)

@@ -1,11 +1,11 @@
 #include "platform/host/host_platform.h"
-#include "contracts/meter_wall_clock.h"
+#include "contracts/hmi_wall_clock.h"
 #include "product/demo_storage.h"
 #include "product/product.h"
-#include "runtime/meter_runtime.h"
+#include "runtime/hmi_runtime.h"
 #include "sim/domain_fixture.h"
 #include "sim/synthetic.h"
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_widgets.h"
 #include "ui/demo_i18n.h"
 #include "ui/demo_ui.h"
@@ -17,37 +17,37 @@
 #include <string.h>
 typedef struct
 {
-    meter_core_t *core;
-    const meter_product_t *product;
-    meter_host_nvm_t *nvm;
+    hmi_core_t *core;
+    const hmi_product_t *product;
+    hmi_host_nvm_t *nvm;
 } action_context_t;
 /* 主机没有硬件 RTC，也不该读到宿主机时间：截图与断言需要逐帧可复现。
    固定在 2026-10-01T00:30Z，经 Product 的东八区偏移即顶栏 08:30。
    可写，用来覆盖对时流程；固件侧由 framework 的 RTC 端口绑定真实设备。 */
-static meter_wall_time_t sim_utc = {2026u, 10u, 1u, 0u, 30u, 0u, true};
-static bool sim_clock_read(meter_wall_time_t *out, void *context)
+static hmi_wall_time_t sim_utc = {2026u, 10u, 1u, 0u, 30u, 0u, true};
+static bool sim_clock_read(hmi_wall_time_t *out, void *context)
 {
     (void)context;
     *out = sim_utc;
     return true;
 }
-static bool sim_clock_write(const meter_wall_time_t *utc, void *context)
+static bool sim_clock_write(const hmi_wall_time_t *utc, void *context)
 {
     (void)context;
     sim_utc = *utc;
     sim_utc.valid = true;
     return true;
 }
-static bool action(void *context, const meter_action_t *a)
+static bool action(void *context, const hmi_action_t *a)
 {
     action_context_t *c = context;
-    bool applied = a->kind == METER_ACTION_PRODUCT
+    bool applied = a->kind == HMI_ACTION_PRODUCT
         ? c->product->local_action && c->product->local_action(&c->core->snapshot, a, SDL_GetTicks())
-        : meter_core_action(c->core, a);
+        : hmi_core_action(c->core, a);
     if (!applied)
         return false;
     /* 保存请求不回滚已应用的 RAM；失败由 NVM 状态单独报告。 */
-    (void)meter_host_nvm_changed(c->nvm, SDL_GetTicks());
+    (void)hmi_host_nvm_changed(c->nvm, SDL_GetTicks());
     return true;
 }
 int main(int argc, char **argv)
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     bool smoke = false, hidden = false;
     const char *update_preview = NULL;
     unsigned update_percent = 37;
-    meter_update_state_t update_phase = METER_UPDATE_DOWNLOADING;
+    hmi_update_state_t update_phase = HMI_UPDATE_DOWNLOADING;
     const char *capture = NULL, *settings = NULL, *visual = NULL, *set_units = NULL, *set_language = NULL;
     demo_scenario_t scenario = DEMO_NORMAL;
     const char *fixture = NULL;
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            printf("Usage: meter-demo [--smoke] [--frames N] [--hidden] [--scenario "
+            printf("Usage: hmi-sim [--smoke] [--frames N] [--hidden] [--scenario "
                    "normal|warning|stale|offline|error|unknown] [--visual "
                    "min|mid|max] [--capture image.bmp] [--page 0..3] [--subpage 0..1] [--settings "
                    "file] [--set-units metric|imperial] [--set-language english|chinese] "
@@ -146,55 +146,55 @@ int main(int argc, char **argv)
         for (unsigned i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
             if (!strcmp(update_preview, names[i]))
             {
-                update_phase = (meter_update_state_t)i;
+                update_phase = (hmi_update_state_t)i;
                 found = true;
             }
         if (!found || smoke || page)
             return 2;
     }
-    const meter_product_t *product = meter_product_get();
-    meter_core_t core;
-    meter_runtime_t runtime;
+    const hmi_product_t *product = hmi_product_get();
+    hmi_core_t core;
+    hmi_runtime_t runtime;
     demo_domain_store_t store;
-    meter_core_storage_t storage = demo_domain_bind(&store);
-    if (!meter_core_init(&core, product->catalog, &storage) ||
-        !meter_runtime_init(&runtime, product, meter_core_apply, &core))
+    hmi_core_storage_t storage = demo_domain_bind(&store);
+    if (!hmi_core_init(&core, product->catalog, &storage) ||
+        !hmi_runtime_init(&runtime, product, hmi_core_apply, &core))
         return 3;
-    meter_host_nvm_t *nvm =
-        meter_host_nvm_open(&core, settings, product->storage->product_namespace, product->storage->schema);
+    hmi_host_nvm_t *nvm =
+        hmi_host_nvm_open(&core, settings, product->storage->product_namespace, product->storage->schema);
     if (settings && !nvm)
         return 7;
     uint32_t load_start = SDL_GetTicks();
-    while (nvm && meter_host_nvm_status(nvm)->state == METER_NVM_LOADING)
+    while (nvm && hmi_host_nvm_status(nvm)->state == HMI_NVM_LOADING)
     {
-        meter_host_nvm_poll(nvm, SDL_GetTicks());
+        hmi_host_nvm_poll(nvm, SDL_GetTicks());
         if ((uint32_t)(SDL_GetTicks() - load_start) > 3000u)
             return 7;
         SDL_Delay(1);
     }
     action_context_t act = {&core, product, nvm};
-    meter_ui_actions_t actions = {action, &act};
+    hmi_ui_actions_t actions = {action, &act};
     if (set_units)
     {
-        meter_action_t a = {METER_ACTION_UNITS, 0, !strcmp(set_units, "imperial")};
+        hmi_action_t a = {HMI_ACTION_UNITS, 0, !strcmp(set_units, "imperial")};
         if (!action(&act, &a))
             return 4;
     }
     if (set_language)
     {
-        meter_action_t a = {METER_ACTION_LANGUAGE, 0,
-                            !strcmp(set_language, "chinese") ? METER_LANGUAGE_ZH : METER_LANGUAGE_EN};
+        hmi_action_t a = {HMI_ACTION_LANGUAGE, 0,
+                            !strcmp(set_language, "chinese") ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN};
         if (!action(&act, &a))
             return 4;
     }
     lv_init();
-    if (!meter_i18n_init())
+    if (!hmi_i18n_init())
         return 5;
     if (!demo_i18n_init())
         return 5;
-    meter_wall_clock_bind(sim_clock_read, NULL);
-    meter_wall_clock_bind_set(sim_clock_write, NULL);
-    if (!meter_host_open(hidden))
+    hmi_wall_clock_bind(sim_clock_read, NULL);
+    hmi_wall_clock_bind_set(sim_clock_write, NULL);
+    if (!hmi_host_open(hidden))
     {
         fprintf(stderr, "SDL display initialization failed\n");
         return 5;
@@ -206,8 +206,8 @@ int main(int argc, char **argv)
     unsigned completed = 0;
     bool navigation_ok = true;
     double max_us = 0, sum_us = 0;
-    meter_runtime_connection(&runtime, true);
-    if (fixture && !meter_fixture_load(&core, fixture))
+    hmi_runtime_connection(&runtime, true);
+    if (fixture && !hmi_fixture_load(&core, fixture))
         return 8;
     if (scenario == DEMO_STALE || scenario == DEMO_OFFLINE)
     {
@@ -217,34 +217,34 @@ int main(int argc, char **argv)
     {
         uint32_t now = n * 16;
         if (page && (n == 4 || n == 7))
-            meter_host_click(100 + (int)page * 195, 450, n == 4);
+            hmi_host_click(100 + (int)page * 195, 450, n == 4);
         if (subpage && (n == 12 || n == 15))
-            meter_host_click(750, 75, n == 12);
+            hmi_host_click(750, 75, n == 12);
         /* 设置页第 2 页只有"时钟"条目；再点一次才进入六个轮盘的对时界面。 */
         if (page == 3 && subpage && (n == 20 || n == 23))
-            meter_host_click(400, 135, n == 20);
+            hmi_host_click(400, 135, n == 20);
         if (smoke)
         {
             if (n == 20 || n == 23)
-                meter_host_click(295, 450, n == 20);
+                hmi_host_click(295, 450, n == 20);
             if (n == 30 && demo_ui_active_page(ui) != 1)
                 navigation_ok = false;
             if (n == 40 || n == 43)
-                meter_host_click(685, 450, n == 40);
+                hmi_host_click(685, 450, n == 40);
             if (n == 50 && demo_ui_active_page(ui) != 3)
                 navigation_ok = false;
             if (n == 55 || n == 58)
-                meter_host_click(600, 160, n == 55);
+                hmi_host_click(600, 160, n == 55);
             if (n == 62 || n == 65)
-                meter_host_click(490, 235, n == 62);
+                hmi_host_click(490, 235, n == 62);
             if (n == 70 || n == 73)
-                meter_host_click(490, 450, n == 70);
+                hmi_host_click(490, 450, n == 70);
             if (n == 80 && demo_ui_active_page(ui) != 2)
                 navigation_ok = false;
             if (n == 90 || n == 93)
-                meter_host_click(100, 450, n == 90);
+                hmi_host_click(100, 450, n == 90);
         }
-        if (!meter_host_events())
+        if (!hmi_host_events())
             break;
         if (fixture)
         {
@@ -256,26 +256,26 @@ int main(int argc, char **argv)
         }
         else if (n % 6 == 0)
             meter_synthetic_step(&runtime, now, scenario);
-        meter_core_connection(&core, runtime.connected, runtime.generation);
-        meter_runtime_step(&runtime, &core, now, true);
+        hmi_core_connection(&core, runtime.connected, runtime.generation);
+        hmi_runtime_step(&runtime, &core, now, true);
         lv_tick_inc(16);
-        uint64_t start = meter_host_counter();
+        uint64_t start = hmi_host_counter();
         if (!update_preview || n == 0)
             product->ui->present(ui, &core.snapshot, 16);
         if (update_preview)
         {
-            meter_update_view_t view = {.visible = true,
+            hmi_update_view_t view = {.visible = true,
                                         .state = update_phase,
                                         .received = update_percent * 10485u,
                                         .total = 1048500u,
-                                        .error = update_phase == METER_UPDATE_FAILED ? 7u : 0u,
+                                        .error = update_phase == HMI_UPDATE_FAILED ? 7u : 0u,
                                         .current_version = "demo-current",
                                         .target_version = "demo-candidate"};
             demo_ui_update_preview(ui, &view, core.snapshot.language);
         }
-        meter_host_nvm_poll(nvm, SDL_GetTicks());
+        hmi_host_nvm_poll(nvm, SDL_GetTicks());
         lv_timer_handler();
-        double us = meter_host_us(start, meter_host_counter());
+        double us = hmi_host_us(start, hmi_host_counter());
         sum_us += us;
         if (us > max_us)
             max_us = us;
@@ -286,12 +286,12 @@ int main(int argc, char **argv)
             heap_peak = used;
         ++completed;
         if (!frames)
-            meter_host_delay(16);
+            hmi_host_delay(16);
     }
     bool pass = navigation_ok && meter_ui_object_count(lv_screen_active()) == objects;
     if (smoke && !core.snapshot.imperial)
         pass = false;
-    if (capture && !meter_host_capture(capture))
+    if (capture && !hmi_host_capture(capture))
         pass = false;
     /* 故障按身份逐个列出而非压成位图：身份是产品句柄，不是位序号。 */
     char fault_ids[DEMO_FAULT_SLOTS * 7 + 1] = "";
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
                      (unsigned)core.snapshot.faults[i].id);
             ++active_faults;
         }
-    meter_value_t speed = meter_snapshot_read(&core.snapshot, METER_SPEED);
+    hmi_value_t speed = hmi_snapshot_read(&core.snapshot, METER_SPEED);
     printf("{\"result\":\"%s\",\"frames\":%u,\"objects\":%u,\"objects_final\":%u,"
            "\"heap_high_water\":%u,\"update_us_avg\":%.2f,\"update_us_max\":%.2f,"
            "\"dispatched\":%u,\"decode_failed\":%u,\"faults\":%u,"
@@ -316,11 +316,11 @@ int main(int argc, char **argv)
            completed ? sum_us / completed : 0, max_us, (unsigned)runtime.diagnostics.dispatched,
            (unsigned)runtime.diagnostics.decode_failed, active_faults,
            fault_ids, (unsigned)speed.state, (double)speed.value, core.snapshot.imperial ? "true" : "false",
-           core.snapshot.language == METER_LANGUAGE_ZH ? "zh-CN" : "en", demo_ui_active_page(ui),
+           core.snapshot.language == HMI_LANGUAGE_ZH ? "zh-CN" : "en", demo_ui_active_page(ui),
            demo_ui_active_subpage(ui));
     product->ui->destroy(ui);
-    bool durable = meter_host_nvm_close(nvm, 5000u);
-    meter_host_close();
+    bool durable = hmi_host_nvm_close(nvm, 5000u);
+    hmi_host_close();
     lv_deinit();
     return pass && durable ? 0 : 7;
 }

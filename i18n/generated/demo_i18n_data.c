@@ -303,9 +303,9 @@ const lv_i18n_language_pack_t demo_i18n_data_pack[DEMO_I18N_DATA_LANGUAGE_COUNT 
     &en_lang,
     &zh_cn_lang,
     NULL};
-const meter_i18n_language_t demo_i18n_data_languages[DEMO_I18N_DATA_LANGUAGE_COUNT] = {
-    {(meter_language_t)0, "en", NULL, NULL},
-    {(meter_language_t)1, "zh-CN", NULL, NULL},
+const hmi_i18n_language_t demo_i18n_data_languages[DEMO_I18N_DATA_LANGUAGE_COUNT] = {
+    {(hmi_language_t)0, "en", NULL, NULL},
+    {(hmi_language_t)1, "zh-CN", NULL, NULL},
 };
 const char *const demo_i18n_data_name_keys[DEMO_I18N_DATA_LANGUAGE_COUNT] = {
     NULL,

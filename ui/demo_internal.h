@@ -2,7 +2,7 @@
 #define DEMO_INTERNAL_H
 #include "application/presentation.h"
 #include "generated/demo_icons.h"
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_widgets.h"
 #include "ui/widgets/meter_update_widget.h"
 #include "ui/demo_i18n.h"
@@ -50,7 +50,7 @@ typedef struct
     lv_obj_t *root, *pages[DEMO_PAGE_COUNT], *nav[DEMO_PAGE_COUNT], *nav_labels[DEMO_PAGE_COUNT],
         *nav_icons[DEMO_PAGE_COUNT], *connection, *clock;
     meter_update_widget_t update_widget;
-    meter_ui_actions_t actions;
+    hmi_ui_actions_t actions;
     unsigned page;
     demo_presentation_t view;
     meter_gauge_t *speed, *steering;
@@ -91,7 +91,7 @@ typedef struct
     char clock_text[32], connection_text[48];
     bool action_failed;
     bool language_presented;
-    meter_language_t presented_language;
+    hmi_language_t presented_language;
 } demo_ui_t;
 lv_obj_t *demo_text(demo_ui_t *ui, lv_obj_t *parent, int x, int y, demo_text_id_t id, const lv_font_t *font,
                     uint32_t color);

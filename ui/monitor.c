@@ -39,7 +39,7 @@ static void parameter_edit(lv_event_t *event)
     bool accepted = end != text && *end == 0 && isfinite(value) && u->view.admin_authorized;
     if (accepted)
     {
-        meter_action_t intent = demo_remote_intent(u->selected_parameter, value);
+        hmi_action_t intent = demo_remote_intent(u->selected_parameter, value);
         accepted = u->actions.send && u->actions.send(u->actions.context, &intent);
     }
     lv_label_set_text(u->parameter_status,
@@ -167,9 +167,9 @@ void demo_monitor_create(demo_ui_t *u)
 }
 void demo_monitor_update(demo_ui_t *u)
 {
-    const lv_font_t *font = u->view.language == METER_LANGUAGE_EN
+    const lv_font_t *font = u->view.language == HMI_LANGUAGE_EN
                                 ? &lv_font_montserrat_20
-                                : meter_font_get(u->view.language, METER_FONT_LABEL);
+                                : hmi_font_get(u->view.language, HMI_FONT_LABEL);
     for (size_t i = 0; i < DEMO_MONITOR_SLOTS; ++i)
     {
         const demo_monitor_view_t *d = &u->view.monitors[i];

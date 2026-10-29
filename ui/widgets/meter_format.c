@@ -17,14 +17,14 @@ unsigned meter_threshold_band(float value, float warning, float low)
 {
     return value < warning ? 0u : value < low ? 1u : 2u;
 }
-void meter_format_value(char *out, size_t size, float value, meter_value_state_t state, const char *unit,
+void meter_format_value(char *out, size_t size, float value, hmi_value_state_t state, const char *unit,
                         unsigned decimals)
 {
-    if (state == METER_VALUE_UNKNOWN)
+    if (state == HMI_VALUE_UNKNOWN)
         snprintf(out, size, "-- %s", unit);
-    else if (state == METER_VALUE_ERROR || !isfinite(value))
+    else if (state == HMI_VALUE_ERROR || !isfinite(value))
         snprintf(out, size, "ERR %s", unit);
     else
         snprintf(out, size, "%.*f %s%s", (int)(decimals > 2 ? 2 : decimals), (double)value, unit,
-                 state == METER_VALUE_STALE ? " / STALE" : "");
+                 state == HMI_VALUE_STALE ? " / STALE" : "");
 }

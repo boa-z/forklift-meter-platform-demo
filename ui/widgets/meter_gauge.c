@@ -1,17 +1,17 @@
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_format.h"
 #include "ui/widgets/meter_widgets.h"
 #include "ui/widgets/meter_needle.h"
 #include <math.h>
 struct meter_gauge
 {
-    meter_language_t language;
+    hmi_language_t language;
     meter_widget_style_t style;
     lv_obj_t *root, *scale, *needle, *hub, *value, *state_label;
     lv_point_precise_t points[2];
     meter_gauge_config_t config;
     float current, from, target;
-    meter_value_state_t state;
+    hmi_value_state_t state;
     char text[48];
 };
 static void animate(void *context, int32_t progress);
@@ -41,19 +41,19 @@ static void redraw(meter_gauge_t *g)
         return;
     meter_needle_points(g->points, angle, g->config.diameter, g->config.needle_length);
     lv_line_set_points(g->needle, g->points, 2);
-    bool missing = g->state == METER_VALUE_UNKNOWN || g->state == METER_VALUE_ERROR;
+    bool missing = g->state == HMI_VALUE_UNKNOWN || g->state == HMI_VALUE_ERROR;
     if (missing)
         lv_obj_add_flag(g->needle, LV_OBJ_FLAG_HIDDEN);
     else
         lv_obj_remove_flag(g->needle, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_set_style_line_color(g->needle, g->state == METER_VALUE_STALE ? g->style.warning : g->style.primary,
+    lv_obj_set_style_line_color(g->needle, g->state == HMI_VALUE_STALE ? g->style.warning : g->style.primary,
                                 0);
-    meter_widget_format_value(g->text, sizeof(g->text), g->current, missing ? g->state : METER_VALUE_VALID,
+    meter_widget_format_value(g->text, sizeof(g->text), g->current, missing ? g->state : HMI_VALUE_VALID,
                        g->config.unit, 1, g->language);
     lv_label_set_text_static(g->value, g->text);
     lv_obj_align(g->value, LV_ALIGN_BOTTOM_MID, 0, -26);
     /* 未收到数据时读数已显示占位符，不重复占用状态文字区域。 */
-    lv_label_set_text_static(g->state_label, g->state == METER_VALUE_UNKNOWN ? "" : meter_widget_state_text(g->state));
+    lv_label_set_text_static(g->state_label, g->state == HMI_VALUE_UNKNOWN ? "" : meter_widget_state_text(g->state));
     lv_obj_align(g->state_label, LV_ALIGN_BOTTOM_MID, 0, -7);
 }
 static void animate(void *context, int32_t progress)
@@ -139,7 +139,7 @@ void meter_gauge_set_value(meter_gauge_t *g, float value)
 {
     if (!isfinite(value))
     {
-        meter_gauge_set_state(g, METER_VALUE_ERROR);
+        meter_gauge_set_state(g, HMI_VALUE_ERROR);
         return;
     }
     g->current = g->target = fmaxf(g->config.min, fminf(g->config.max, value));
@@ -150,7 +150,7 @@ void meter_gauge_set_value_animated(meter_gauge_t *g, float value, uint32_t dura
 {
     if (!isfinite(value))
     {
-        meter_gauge_set_state(g, METER_VALUE_ERROR);
+        meter_gauge_set_state(g, HMI_VALUE_ERROR);
         return;
     }
     value = fmaxf(g->config.min, fminf(g->config.max, value));
@@ -173,15 +173,15 @@ void meter_gauge_set_value_animated(meter_gauge_t *g, float value, uint32_t dura
     lv_anim_set_path_cb(&animation, lv_anim_path_ease_out);
     lv_anim_start(&animation);
 }
-void meter_gauge_set_state(meter_gauge_t *g, meter_value_state_t state)
+void meter_gauge_set_state(meter_gauge_t *g, hmi_value_state_t state)
 {
     g->state = state;
     redraw(g);
 }
-void meter_gauge_set_language(meter_gauge_t *g, meter_language_t language)
+void meter_gauge_set_language(meter_gauge_t *g, hmi_language_t language)
 {
     g->language = language;
-    meter_i18n_apply_font(g->value, language, meter_widget_font_role(g->style.value_font));
-    meter_i18n_apply_font(g->state_label, language, meter_widget_font_role(g->style.label_font));
+    hmi_i18n_apply_font(g->value, language, meter_widget_font_role(g->style.value_font));
+    hmi_i18n_apply_font(g->state_label, language, meter_widget_font_role(g->style.label_font));
     redraw(g);
 }

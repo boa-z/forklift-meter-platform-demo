@@ -1,7 +1,7 @@
 /* 本文件由 tools/generate_catalog.py 自动生成，请勿手工修改；数据源：catalog/demo_catalog.json。 */
 #ifndef DEMO_CATALOG_H
 #define DEMO_CATALOG_H
-#include "contracts/meter_domain.h"
+#include "contracts/hmi_domain.h"
 enum
 {
     METER_SPEED = 1,
@@ -63,5 +63,5 @@ enum
     DEMO_MONITOR_SLOTS = 14,
     DEMO_FAULT_SLOTS = 10,
 };
-extern const meter_catalog_t meter_demo_catalog;
+extern const hmi_catalog_t meter_demo_catalog;
 #endif

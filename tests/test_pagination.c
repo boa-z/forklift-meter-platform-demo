@@ -1,4 +1,4 @@
-#include "core/meter_core.h"
+#include "core/hmi_core.h"
 #include "platform/host/host_platform.h"
 #include "services/settings_app.h"
 #include "ui/demo_internal.h"
@@ -18,12 +18,12 @@
 
 static unsigned actions_sent;
 static bool accept = true;
-static bool send(void *context, const meter_action_t *action)
+static bool send(void *context, const hmi_action_t *action)
 {
     ++actions_sent;
-    if (!accept || !demo_settings_action(&((meter_core_t *)context)->snapshot, action, lv_tick_get()))
+    if (!accept || !demo_settings_action(&((hmi_core_t *)context)->snapshot, action, lv_tick_get()))
         return false;
-    return action->kind == METER_ACTION_PRODUCT || meter_core_action(context, action);
+    return action->kind == HMI_ACTION_PRODUCT || hmi_core_action(context, action);
 }
 
 /* 对实际布局求边界；仅验证可见内容，不能用隐藏溢出来掩盖排版问题。 */
@@ -161,30 +161,30 @@ static int check_monitor_layout(demo_ui_t *ui)
 }
 int main(int argc, char **argv)
 {
-    meter_core_t core;
-    meter_value_t signals[DEMO_SIGNAL_SLOTS];
+    hmi_core_t core;
+    hmi_value_t signals[DEMO_SIGNAL_SLOTS];
     float parameters[DEMO_PARAMETER_SLOTS];
-    meter_fault_state_t faults[DEMO_FAULT_SLOTS];
-    meter_core_storage_t storage = {signals, DEMO_SIGNAL_SLOTS, parameters, DEMO_PARAMETER_SLOTS,
+    hmi_fault_state_t faults[DEMO_FAULT_SLOTS];
+    hmi_core_storage_t storage = {signals, DEMO_SIGNAL_SLOTS, parameters, DEMO_PARAMETER_SLOTS,
                                     faults,  DEMO_FAULT_SLOTS};
-    CHECK(meter_core_init(&core, &meter_demo_catalog, &storage));
+    CHECK(hmi_core_init(&core, &meter_demo_catalog, &storage));
     lv_init();
-    CHECK(meter_i18n_init() && demo_i18n_init() && meter_host_open(true));
-    meter_ui_actions_t actions = {send, &core};
+    CHECK(hmi_i18n_init() && demo_i18n_init() && hmi_host_open(true));
+    hmi_ui_actions_t actions = {send, &core};
     demo_ui_t *ui = demo_ui_create(lv_screen_active(), &actions);
     CHECK(ui);
     size_t objects = meter_ui_object_count(ui->root);
     demo_pager_t *pagers[] = {&ui->monitor_pager, &ui->fault_pager, &ui->settings_pager};
     for (unsigned round = 0; round < 3; ++round)
     {
-        core.snapshot.language = round == 1 ? METER_LANGUAGE_ZH : METER_LANGUAGE_EN;
+        core.snapshot.language = round == 1 ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN;
         core.snapshot.brightness = 100;
-        for (unsigned state = METER_VALUE_UNKNOWN; state <= METER_VALUE_ERROR; ++state)
+        for (unsigned state = HMI_VALUE_UNKNOWN; state <= HMI_VALUE_ERROR; ++state)
         {
             for (size_t i = 0; i < core.snapshot.catalog->signal_count; ++i)
             {
-                core.snapshot.signals[i].state = (meter_value_state_t)state;
-                core.snapshot.signals[i].value = state == METER_VALUE_VALID ? 0 : -123.4f;
+                core.snapshot.signals[i].state = (hmi_value_state_t)state;
+                core.snapshot.signals[i].value = state == HMI_VALUE_VALID ? 0 : -123.4f;
             }
             for (size_t i = 0; i < DEMO_FAULT_SLOTS; ++i)
                 core.snapshot.faults[i].active = (i + state) % 2 != 0;
@@ -234,12 +234,12 @@ int main(int argc, char **argv)
                     CHECK(check_layout(ui->pages[page]) == 0);
                     CHECK(meter_ui_object_count(ui->root) == objects);
                     CHECK(actions_sent == 0);
-                    if (argc == 2 && round < 2 && state == METER_VALUE_VALID)
+                    if (argc == 2 && round < 2 && state == HMI_VALUE_VALID)
                     {
                         char path[1024];
                         snprintf(path, sizeof(path), "%s/page-%u-%u-%s.bmp", argv[1], page, subpage + 1,
                                  round ? "zh" : "en");
-                        CHECK(meter_host_capture(path));
+                        CHECK(hmi_host_capture(path));
                     }
                 }
                 lv_obj_send_event(pager->next, LV_EVENT_CLICKED, NULL);
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
     {
         char password_capture[1024];
         snprintf(password_capture, sizeof(password_capture), "%s/password-page.bmp", argv[1]);
-        CHECK(meter_host_capture(password_capture));
+        CHECK(hmi_host_capture(password_capture));
     }
     lv_textarea_set_text(ui->admin_password, "0000");
     lv_obj_send_event(ui->password_keyboard, LV_EVENT_READY, NULL);
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
     demo_navigation_show(ui, DEMO_SETTINGS);
     for (unsigned language = 0; language < 2; ++language)
     {
-        core.snapshot.language = language ? METER_LANGUAGE_ZH : METER_LANGUAGE_EN;
+        core.snapshot.language = language ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN;
         core.snapshot.brightness = 100;
         demo_ui_present(ui, &core.snapshot, 16);
         demo_settings_show_page(ui, 0);
@@ -323,7 +323,7 @@ int main(int argc, char **argv)
             {
                 char path[1024];
                 snprintf(path, sizeof(path), "%s/setting-%u-%s.bmp", argv[1], i, language ? "zh" : "en");
-                CHECK(meter_host_capture(path));
+                CHECK(hmi_host_capture(path));
             }
             lv_obj_send_event(ui->settings_detail_back, LV_EVENT_CLICKED, NULL);
             CHECK(actions_sent == before && lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
@@ -338,7 +338,7 @@ int main(int argc, char **argv)
         {
             char path[1024];
             snprintf(path, sizeof(path), "%s/version-%s.bmp", argv[1], language ? "zh" : "en");
-            CHECK(meter_host_capture(path));
+            CHECK(hmi_host_capture(path));
         }
         lv_obj_send_event(ui->version_back, LV_EVENT_CLICKED, NULL);
         CHECK(!ui->version_open && ui->settings_tab == 0);
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
         {
             char path[1024];
             snprintf(path, sizeof(path), "%s/admin-%s.bmp", argv[1], language ? "zh" : "en");
-            CHECK(meter_host_capture(path));
+            CHECK(hmi_host_capture(path));
         }
         for (unsigned i = 0; i < DEMO_ADMIN_COUNT; ++i)
         {
@@ -372,13 +372,13 @@ int main(int argc, char **argv)
                   demo_i18n_text(core.snapshot.imperial ? DEMO_TXT_IMPERIAL : DEMO_TXT_METRIC)));
     lv_obj_send_event(ui->settings_detail_back, LV_EVENT_CLICKED, NULL);
     lv_obj_send_event(ui->setting_entries[1], LV_EVENT_CLICKED, NULL);
-    meter_language_t old_language = core.snapshot.language;
+    hmi_language_t old_language = core.snapshot.language;
     lv_obj_send_event(ui->language_button, LV_EVENT_CLICKED, NULL);
     demo_ui_present(ui, &core.snapshot, 16);
     CHECK(core.snapshot.language != old_language);
     CHECK(!strcmp(
         lv_label_get_text(ui->setting_values[1]),
-        demo_i18n_text(core.snapshot.language == METER_LANGUAGE_EN ? DEMO_TXT_ENGLISH : DEMO_TXT_CHINESE)));
+        demo_i18n_text(core.snapshot.language == HMI_LANGUAGE_EN ? DEMO_TXT_ENGLISH : DEMO_TXT_CHINESE)));
     lv_obj_send_event(ui->settings_detail_back, LV_EVENT_CLICKED, NULL);
     lv_obj_send_event(ui->setting_entries[3], LV_EVENT_CLICKED, NULL);
     lv_slider_set_value(ui->limit, 31, LV_ANIM_OFF);
@@ -408,7 +408,7 @@ int main(int argc, char **argv)
     CHECK(ui->settings_tab == 0 && lv_obj_has_flag(ui->settings_detail, LV_OBJ_FLAG_HIDDEN));
     CHECK(meter_ui_object_count(ui->root) == objects);
     demo_ui_destroy(ui);
-    meter_host_close();
+    hmi_host_close();
     lv_deinit();
     puts("Pagination, bilingual bounds, retained readings, end stops and settings PASS");
     return 0;

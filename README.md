@@ -2,7 +2,7 @@
 
 > [中文版](README.zh-CN.md)
 
-A complete public, synthetic Product for forklift-meter-platform. It demonstrates an 800×480 native LVGL instrument, English and Simplified Chinese, synthetic CAN, local settings and documented validation. It contains no customer protocol or vehicle acceptance claim.
+A complete public, synthetic Product for luban-lite-hmi. It demonstrates an 800×480 native LVGL instrument, English and Simplified Chinese, synthetic CAN, local settings and documented validation. It contains no customer protocol or vehicle acceptance claim.
 
 ## Start here
 
@@ -15,7 +15,7 @@ A complete public, synthetic Product for forklift-meter-platform. It demonstrate
 
 ## Repository boundary
 
-This repository owns its `product/sources.json`, catalog, protocol, application, UI, fonts, assets, tests and documentation. The consuming Framework owns reusable runtime and build tooling. Framework pins this repository as `products/demo`; build with `METER_PRODUCT_ROOT=products/demo`, or an absolute path to another checkout. This repository intentionally has no second standalone CMake build.
+This repository owns its `product/sources.json`, catalog, protocol, application, UI, fonts, assets, tests and documentation. The consuming Framework owns reusable runtime and build tooling. Framework pins this repository as `products/demo`; build with `HMI_PRODUCT_ROOT=products/demo`, or an absolute path to another checkout. This repository intentionally has no second standalone CMake build.
 
 | Directory | Responsibility |
 |---|---|

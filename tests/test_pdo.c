@@ -1,4 +1,4 @@
-#include "core/meter_core.h"
+#include "core/hmi_core.h"
 #include "generated/demo_catalog.h"
 #include "product/demo_storage.h"
 #include "product/product.h"
@@ -8,14 +8,14 @@
 #include <stdio.h>
 #include <string.h>
 
-static void set_value(meter_snapshot_t *snapshot, meter_signal_id_t id, float value, meter_value_state_t state)
+static void set_value(hmi_snapshot_t *snapshot, hmi_signal_id_t id, float value, hmi_value_state_t state)
 {
-    size_t index = meter_catalog_index(snapshot->catalog, id);
+    size_t index = hmi_catalog_index(snapshot->catalog, id);
     assert(index < snapshot->catalog->signal_count);
-    snapshot->signals[index] = (meter_value_t){value, 1000u, state, METER_SOURCE_DEMO};
+    snapshot->signals[index] = (hmi_value_t){value, 1000u, state, HMI_SOURCE_DEMO};
 }
 
-static void emit_vector(const char *name, const meter_can_frame_t *frame)
+static void emit_vector(const char *name, const hmi_can_frame_t *frame)
 {
     printf("%s ", name);
     for (unsigned i = 0u; i < frame->size; ++i)
@@ -24,10 +24,10 @@ static void emit_vector(const char *name, const meter_can_frame_t *frame)
 }
 
 /* 每次编码推进该标识的滚动计数；先空转到想要的序号再取真正的输出。 */
-static meter_can_frame_t encode_at(const meter_periodic_frame_t *definition, const meter_snapshot_t *snapshot,
+static hmi_can_frame_t encode_at(const hmi_periodic_frame_t *definition, const hmi_snapshot_t *snapshot,
                                    unsigned skip)
 {
-    meter_can_frame_t frame = definition->frame;
+    hmi_can_frame_t frame = definition->frame;
     for (unsigned i = 0u; i < skip; ++i)
     {
         frame = definition->frame;
@@ -41,25 +41,25 @@ static meter_can_frame_t encode_at(const meter_periodic_frame_t *definition, con
 
 int main(void)
 {
-    const meter_product_t *product = meter_product_get();
+    const hmi_product_t *product = hmi_product_get();
     assert(product->periodic_count == 4u);
     demo_domain_store_t storage;
-    meter_core_storage_t binding = demo_domain_bind(&storage);
-    meter_core_t core;
-    assert(meter_core_init(&core, product->catalog, &binding));
-    meter_snapshot_t *domain = &core.snapshot;
-    const meter_signal_id_t ids[] = {METER_SPEED, METER_SOC,     METER_HEIGHT,   METER_LOAD,   METER_SEAT,
+    hmi_core_storage_t binding = demo_domain_bind(&storage);
+    hmi_core_t core;
+    assert(hmi_core_init(&core, product->catalog, &binding));
+    hmi_snapshot_t *domain = &core.snapshot;
+    const hmi_signal_id_t ids[] = {METER_SPEED, METER_SOC,     METER_HEIGHT,   METER_LOAD,   METER_SEAT,
                                      METER_BRAKE, METER_NEUTRAL, METER_CHARGING, METER_WARNING};
     const float nominal[] = {12.5f, 75.0f, 1.25f, 780.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f};
     for (unsigned i = 0u; i < sizeof(ids) / sizeof(ids[0]); ++i)
-        set_value(domain, ids[i], nominal[i], METER_VALUE_VALID);
+        set_value(domain, ids[i], nominal[i], HMI_VALUE_VALID);
     domain->brightness = 31u;
     domain->revision = 0x1234u;
     domain->generation = 0x12345678u;
 
     /* 黄金向量：DBC 交叉校验（test_pdo_dbc.py）读取这些输出。 */
-    const meter_periodic_frame_t *motion = &product->periodic[2], *status = &product->periodic[3];
-    meter_can_frame_t frame = encode_at(motion, domain, 127u);
+    const hmi_periodic_frame_t *motion = &product->periodic[2], *status = &product->periodic[3];
+    hmi_can_frame_t frame = encode_at(motion, domain, 127u);
     const uint8_t motion_bytes[] = {0xe2, 4, 0xe2, 4, 0x0c, 3, 75, 255};
     assert(memcmp(frame.data, motion_bytes, 8u) == 0);
     emit_vector("motion", &frame);
@@ -89,7 +89,7 @@ int main(void)
     /* 非法入口不产生输出。 */
     frame = motion->frame;
     frame.id = 0x123u;
-    meter_can_frame_t before = frame;
+    hmi_can_frame_t before = frame;
     assert(!demo_pdo_encode(domain, 0u, &frame) && memcmp(&frame, &before, sizeof(frame)) == 0);
     assert(!demo_pdo_encode(NULL, 0u, &frame) && !demo_pdo_encode(domain, 0u, NULL));
 
@@ -97,11 +97,11 @@ int main(void)
     const float invalid[] = {-1.0f, 101.0f, NAN, INFINITY};
     for (unsigned i = 0u; i < sizeof(invalid) / sizeof(invalid[0]); ++i)
     {
-        set_value(domain, METER_SOC, invalid[i], METER_VALUE_VALID);
+        set_value(domain, METER_SOC, invalid[i], HMI_VALUE_VALID);
         frame = encode_at(motion, domain, 0u);
         assert(frame.data[0] == 0u && (frame.data[7] & 1u) == 0u);
     }
-    const meter_value_state_t unavailable[] = {METER_VALUE_UNKNOWN, METER_VALUE_STALE, METER_VALUE_ERROR};
+    const hmi_value_state_t unavailable[] = {HMI_VALUE_UNKNOWN, HMI_VALUE_STALE, HMI_VALUE_ERROR};
     for (unsigned i = 0u; i < sizeof(unavailable) / sizeof(unavailable[0]); ++i)
     {
         set_value(domain, METER_SOC, 75.0f, unavailable[i]);
@@ -111,14 +111,14 @@ int main(void)
     frame = encode_at(motion, domain, 0u);
     assert(frame.data[0] == 0u && frame.data[6] == 0u);
     emit_vector("stale_motion", &frame);
-    set_value(domain, METER_SEAT, 0.5f, METER_VALUE_VALID);
+    set_value(domain, METER_SEAT, 0.5f, HMI_VALUE_VALID);
     frame = encode_at(status, domain, 0u);
     assert(frame.data[0] == 0u && frame.data[1] == 0u);
     emit_vector("stale_status", &frame);
 
     /* 零是合法的新鲜值。 */
     for (unsigned i = 0u; i < 4u; ++i)
-        set_value(domain, ids[i], 0.0f, METER_VALUE_VALID);
+        set_value(domain, ids[i], 0.0f, HMI_VALUE_VALID);
     frame = encode_at(motion, domain, 0u);
     assert(frame.data[0] == 0u && (frame.data[7] & 1u) == 1u);
     emit_vector("zero_motion", &frame);

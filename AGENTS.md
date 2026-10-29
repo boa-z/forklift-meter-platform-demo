@@ -1,7 +1,7 @@
 # Reference Product development rules
 
 - This repository contains synthetic public data only. Never import customer source, protocols, screenshots or history.
-- Build through a compatible forklift-meter-platform checkout using METER_PRODUCT_ROOT. Keep Framework contracts and tools in Framework.
+- Build through a compatible luban-lite-hmi checkout using HMI_PRODUCT_ROOT. Keep Framework contracts and tools in Framework.
 - Product requirements, architecture, protocol, build instructions, UI and validation live in docs/. Update English and Simplified Chinese together.
 - Use native LVGL widgets and layout. Keep fonts, SVG/PNG icons and their licenses within this Product.
 - Export screenshots from the actual SDL2 executable with tools/capture_screenshots.py. Preserve pixels; never redraw screenshots.

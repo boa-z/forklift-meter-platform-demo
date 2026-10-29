@@ -1,7 +1,7 @@
 #ifndef DEMO_I18N_H
 #define DEMO_I18N_H
-#include "contracts/meter_domain.h"
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "contracts/hmi_domain.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 typedef struct _lv_obj_t lv_obj_t;
 typedef enum
 {

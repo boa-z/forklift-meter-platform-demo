@@ -1,15 +1,15 @@
-#include "ui/common/i18n/meter_i18n_runtime.h"
+#include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_format.h"
 #include "ui/widgets/meter_widgets.h"
 #include <math.h>
 struct meter_linear_meter
 {
-    meter_language_t language;
+    hmi_language_t language;
     meter_widget_style_t style;
     lv_obj_t *root, *bar, *label;
     float min, max, value;
     const char *unit;
-    meter_value_state_t state;
+    hmi_value_state_t state;
     char text[48];
 };
 static void dispose(lv_event_t *e)
@@ -27,9 +27,9 @@ static void redraw(meter_linear_meter_t *b)
     float value = 0;
     meter_gauge_map(b->value, b->min, b->max, 0, 1000, &value);
     lv_bar_set_value(b->bar,
-                     (b->state == METER_VALUE_UNKNOWN || b->state == METER_VALUE_ERROR) ? 0 : (int)value,
+                     (b->state == HMI_VALUE_UNKNOWN || b->state == HMI_VALUE_ERROR) ? 0 : (int)value,
                      LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(b->bar, b->state == METER_VALUE_VALID ? b->style.primary : b->style.muted,
+    lv_obj_set_style_bg_color(b->bar, b->state == HMI_VALUE_VALID ? b->style.primary : b->style.muted,
                               LV_PART_INDICATOR);
     meter_widget_format_value(b->text, sizeof(b->text), b->value, b->state, b->unit, 2, b->language);
     lv_label_set_text_static(b->label, b->text);
@@ -63,21 +63,21 @@ meter_linear_meter_t *meter_linear_meter_create(lv_obj_t *p, int x, int y, int w
 void meter_linear_meter_set_value(meter_linear_meter_t *b, float v)
 {
     if (!isfinite(v))
-        b->state = METER_VALUE_ERROR;
+        b->state = HMI_VALUE_ERROR;
     else
         b->value = fmaxf(b->min, fminf(b->max, v));
     redraw(b);
 }
-void meter_linear_meter_set_state(meter_linear_meter_t *b, meter_value_state_t state)
+void meter_linear_meter_set_state(meter_linear_meter_t *b, hmi_value_state_t state)
 {
     b->state = state;
     redraw(b);
 }
 
-void meter_linear_meter_set_language(meter_linear_meter_t *b, meter_language_t language)
+void meter_linear_meter_set_language(meter_linear_meter_t *b, hmi_language_t language)
 {
     b->language = language;
-    meter_i18n_apply_font(b->label, language, meter_widget_font_role(b->style.label_font));
+    hmi_i18n_apply_font(b->label, language, meter_widget_font_role(b->style.label_font));
     redraw(b);
 }
 void meter_linear_meter_set_style(meter_linear_meter_t *b, const meter_widget_style_t *style)

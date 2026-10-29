@@ -6,14 +6,14 @@ static void action(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
     lv_obj_t *target = lv_event_get_target_obj(event);
-    meter_action_t intent = {METER_ACTION_UNITS, 0, !u->view.imperial};
+    hmi_action_t intent = {HMI_ACTION_UNITS, 0, !u->view.imperial};
     if (target == u->language_button)
     {
-        intent.kind = METER_ACTION_LANGUAGE;
-        intent.value = u->view.language == METER_LANGUAGE_EN ? METER_LANGUAGE_ZH : METER_LANGUAGE_EN;
+        intent.kind = HMI_ACTION_LANGUAGE;
+        intent.value = u->view.language == HMI_LANGUAGE_EN ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN;
     }
     else if (target == u->brightness)
-        intent = (meter_action_t){METER_ACTION_BRIGHTNESS, 0, (float)lv_slider_get_value(target)};
+        intent = (hmi_action_t){HMI_ACTION_BRIGHTNESS, 0, (float)lv_slider_get_value(target)};
     else if (target == u->limit)
         intent = demo_speed_limit_intent((float)lv_slider_get_value(target));
     u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
@@ -125,7 +125,7 @@ static void password_submit(lv_event_t *event)
         valid = text[i] >= '0' && text[i] <= '9';
     if (valid)
     {
-        meter_action_t intent =
+        hmi_action_t intent =
             demo_settings_intent(u->password_admin ? DEMO_INTENT_ADMIN_LOGIN : DEMO_INTENT_USER_LOGIN,
                                  (float)strtoul(text, NULL, 10));
         u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
@@ -137,7 +137,7 @@ static void password_submit(lv_event_t *event)
 static void logout(lv_event_t *event)
 {
     demo_ui_t *u = lv_event_get_user_data(event);
-    meter_action_t intent = demo_settings_intent(DEMO_INTENT_LOGOUT, 0);
+    hmi_action_t intent = demo_settings_intent(DEMO_INTENT_LOGOUT, 0);
     u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
     demo_editors_close(u);
 }
@@ -174,7 +174,7 @@ static void fill_clock_options(void)
    设备时钟，将来若把轮盘绑到 subject 或换用会回发的设置接口，不能让它自己喂自己。 */
 static void clock_sync(demo_ui_t *u)
 {
-    meter_wall_time_t local;
+    hmi_wall_time_t local;
     (void)demo_clock_fields(&local);
     const unsigned values[DEMO_CLOCK_FIELDS] = {local.year, local.month, local.day,
                                                 local.hour, local.minute, local.second};
@@ -201,7 +201,7 @@ static void clock_roll(lv_event_t *event)
         if (target != u->clock_rollers[field])
             continue;
         const float value = (float)(clock_specs[field].first + lv_roller_get_selected(target));
-        meter_action_t intent = demo_clock_intent((demo_clock_field_t)field, value);
+        hmi_action_t intent = demo_clock_intent((demo_clock_field_t)field, value);
         u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
     }
 }
@@ -214,7 +214,7 @@ static void rate_select(lv_event_t *event)
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
         if (lv_event_get_target_obj(event) == u->rate_buttons[i])
         {
-            meter_action_t intent = demo_admin_intent(0, (float)i);
+            hmi_action_t intent = demo_admin_intent(0, (float)i);
             u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
         }
 }
@@ -227,7 +227,7 @@ static void admin_change(lv_event_t *event)
         return;
     unsigned i = u->selected_setting - 4;
     unsigned value = (u->view.admin_values[i] + 1u) % (i == 0 ? 3u : 2u);
-    meter_action_t intent = demo_admin_intent(i, (float)value);
+    hmi_action_t intent = demo_admin_intent(i, (float)value);
     u->action_failed = !u->actions.send || !u->actions.send(u->actions.context, &intent);
 }
 /* 当前标签页该显示哪张卡片；用户设置的第二页只有"时钟"这一条目。 */
@@ -607,9 +607,9 @@ void demo_settings_create(demo_ui_t *u)
 void demo_settings_update(demo_ui_t *u)
 {
     ((u->selected_setting != 4) ? lv_obj_add_flag(u->settings_note, LV_OBJ_FLAG_HIDDEN) : lv_obj_remove_flag(u->settings_note, LV_OBJ_FLAG_HIDDEN));
-    const lv_font_t *font = u->view.language == METER_LANGUAGE_EN
+    const lv_font_t *font = u->view.language == HMI_LANGUAGE_EN
                                 ? &lv_font_montserrat_20
-                                : meter_font_get(u->view.language, METER_FONT_LABEL);
+                                : hmi_font_get(u->view.language, HMI_FONT_LABEL);
     if (u->admin_navigation_pending && u->view.admin_authorized)
     {
         u->admin_navigation_pending = false;
@@ -631,7 +631,7 @@ void demo_settings_update(demo_ui_t *u)
                       demo_i18n_text(u->view.imperial ? DEMO_TXT_METRIC : DEMO_TXT_IMPERIAL));
     lv_label_set_text(
         lv_obj_get_child(u->language_button, 0),
-        demo_i18n_text(u->view.language == METER_LANGUAGE_EN ? DEMO_TXT_CHINESE : DEMO_TXT_ENGLISH));
+        demo_i18n_text(u->view.language == HMI_LANGUAGE_EN ? DEMO_TXT_CHINESE : DEMO_TXT_ENGLISH));
     if (!lv_obj_has_state(u->brightness, LV_STATE_PRESSED))
         lv_slider_set_value(u->brightness, u->view.brightness, LV_ANIM_OFF);
     lv_obj_set_state(u->limit, LV_STATE_DISABLED, !u->view.limit_available);
@@ -669,7 +669,7 @@ void demo_settings_update(demo_ui_t *u)
                       demo_i18n_text(u->view.imperial ? DEMO_TXT_IMPERIAL : DEMO_TXT_METRIC));
     lv_label_set_text(
         u->setting_values[1],
-        demo_i18n_text(u->view.language == METER_LANGUAGE_EN ? DEMO_TXT_ENGLISH : DEMO_TXT_CHINESE));
+        demo_i18n_text(u->view.language == HMI_LANGUAGE_EN ? DEMO_TXT_ENGLISH : DEMO_TXT_CHINESE));
     lv_label_set_text_fmt(u->setting_values[2], "%u %%", (unsigned)u->view.brightness);
     if (u->view.limit_available)
         lv_label_set_text_fmt(u->setting_values[3], "%.0f km/h", (double)u->view.limit);
@@ -702,7 +702,7 @@ void demo_settings_update(demo_ui_t *u)
     for (unsigned i = 0; i < sizeof(dynamic) / sizeof(dynamic[0]); ++i)
         lv_obj_set_style_text_font(dynamic[i], font, 0);
     for (unsigned i = 0; i < 2; ++i)
-        meter_i18n_apply_font(lv_obj_get_child(u->settings_menu[i], 0), u->view.language, METER_FONT_LABEL);
+        hmi_i18n_apply_font(lv_obj_get_child(u->settings_menu[i], 0), u->view.language, HMI_FONT_LABEL);
     for (unsigned i = 0; i < 4; ++i)
     {
         lv_obj_set_style_text_font(u->admin_value_labels[i], font, 0);

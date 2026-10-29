@@ -1,5 +1,5 @@
 #include "application/presentation.h"
-#include "core/meter_core.h"
+#include "core/hmi_core.h"
 #include "platform/host/host_platform.h"
 #include "product/demo_storage.h"
 #include "services/settings_app.h"
@@ -18,23 +18,23 @@
     } while (0)
 
 /* 假 RTC：读固定值、可控失败；写通道像真实 RTC 一样把新值立刻变成后续读数的来源。 */
-static meter_wall_time_t rtc_utc;
+static hmi_wall_time_t rtc_utc;
 static unsigned writes;
-static meter_wall_time_t written;
+static hmi_wall_time_t written;
 
-static bool read_rtc(meter_wall_time_t *out, void *context)
+static bool read_rtc(hmi_wall_time_t *out, void *context)
 {
     (void)context;
     *out = rtc_utc;
     return true;
 }
-static bool read_failed(meter_wall_time_t *out, void *context)
+static bool read_failed(hmi_wall_time_t *out, void *context)
 {
     (void)out;
     (void)context;
     return false;
 }
-static bool write_rtc(const meter_wall_time_t *utc, void *context)
+static bool write_rtc(const hmi_wall_time_t *utc, void *context)
 {
     (void)context;
     ++writes;
@@ -44,15 +44,15 @@ static bool write_rtc(const meter_wall_time_t *utc, void *context)
 }
 
 static unsigned actions_sent;
-static meter_action_t last_action;
-static bool send(void *context, const meter_action_t *action)
+static hmi_action_t last_action;
+static bool send(void *context, const hmi_action_t *action)
 {
     ++actions_sent;
     last_action = *action;
-    return demo_settings_action(&((meter_core_t *)context)->snapshot, action, lv_tick_get());
+    return demo_settings_action(&((hmi_core_t *)context)->snapshot, action, lv_tick_get());
 }
 
-static void present(meter_core_t *core, demo_ui_t *ui)
+static void present(hmi_core_t *core, demo_ui_t *ui)
 {
     demo_settings_publish(&core->snapshot);
     demo_ui_present(ui, &core->snapshot, 16);
@@ -65,16 +65,16 @@ static void roll(demo_ui_t *ui, demo_clock_field_t field, unsigned index)
     lv_obj_send_event(ui->clock_rollers[field], LV_EVENT_VALUE_CHANGED, NULL);
 }
 
-static bool field_set(meter_core_t *core, demo_clock_field_t field, float value)
+static bool field_set(hmi_core_t *core, demo_clock_field_t field, float value)
 {
-    meter_action_t intent = demo_clock_intent(field, value);
+    hmi_action_t intent = demo_clock_intent(field, value);
     return demo_settings_action(&core->snapshot, &intent, lv_tick_get());
 }
 
-static bool field_rejected(meter_core_t *core, demo_clock_field_t field, float value)
+static bool field_rejected(hmi_core_t *core, demo_clock_field_t field, float value)
 {
     const unsigned before = writes;
-    meter_action_t intent = demo_clock_intent(field, value);
+    hmi_action_t intent = demo_clock_intent(field, value);
     CHECK(!demo_settings_action(&core->snapshot, &intent, lv_tick_get()));
     CHECK(writes == before);
     return true;
@@ -85,8 +85,8 @@ int main(void)
     char text[8];
 
     /* 未绑定来源：只能给占位符，不能给 00:00 或 1970。 */
-    meter_wall_clock_bind(NULL, NULL);
-    meter_wall_clock_bind_set(NULL, NULL);
+    hmi_wall_clock_bind(NULL, NULL);
+    hmi_wall_clock_bind_set(NULL, NULL);
     CHECK(!demo_clock_text(text, sizeof(text)) && !strcmp(text, "--:--"));
     /* 缓冲区容不下 "HH:MM" 时也必须拒绝，而不是截断出一个假时间。 */
     char too_small[5];
@@ -94,54 +94,54 @@ int main(void)
     CHECK(!demo_clock_text(NULL, sizeof(text)));
 
     /* 固定 UTC 2026-10-01T00:30Z，按 Product 的东八区偏移即顶栏 08:30。 */
-    rtc_utc = (meter_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
-    meter_wall_clock_bind(read_rtc, NULL);
-    meter_wall_clock_bind_set(write_rtc, NULL);
+    rtc_utc = (hmi_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
+    hmi_wall_clock_bind(read_rtc, NULL);
+    hmi_wall_clock_bind_set(write_rtc, NULL);
     CHECK(demo_clock_text(text, sizeof(text)) && !strcmp(text, "08:30"));
     /* 占位符与真实读数同宽，顶栏不会因为时钟可用与否而重排。 */
     CHECK(strlen(text) == strlen("--:--"));
 
     /* 跨午夜：UTC 16:05 + 8h 落到次日 00:05，日期由公共层负责。 */
-    rtc_utc = (meter_wall_time_t){2026u, 10u, 1u, 16u, 5u, 0u, true};
+    rtc_utc = (hmi_wall_time_t){2026u, 10u, 1u, 16u, 5u, 0u, true};
     CHECK(demo_clock_text(text, sizeof(text)) && !strcmp(text, "00:05"));
 
     /* 源失败与越界读数都按不可信处理。 */
-    meter_wall_clock_bind(read_failed, NULL);
+    hmi_wall_clock_bind(read_failed, NULL);
     CHECK(!demo_clock_text(text, sizeof(text)) && !strcmp(text, "--:--"));
-    rtc_utc = (meter_wall_time_t){2026u, 13u, 1u, 0u, 0u, 0u, true};
-    meter_wall_clock_bind(read_rtc, NULL);
+    rtc_utc = (hmi_wall_time_t){2026u, 13u, 1u, 0u, 0u, 0u, true};
+    hmi_wall_clock_bind(read_rtc, NULL);
     CHECK(!demo_clock_text(text, sizeof(text)) && !strcmp(text, "--:--"));
 
     /* 对时页的初始字段：可信读数直接用它，不可信时回落到固定基准日但仍然可编辑。 */
-    meter_wall_time_t local;
-    rtc_utc = (meter_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
+    hmi_wall_time_t local;
+    rtc_utc = (hmi_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
     CHECK(demo_clock_fields(&local) && local.year == 2026u && local.month == 10u && local.day == 1u &&
           local.hour == 8u && local.minute == 30u && local.second == 0u);
-    meter_wall_clock_bind(NULL, NULL);
+    hmi_wall_clock_bind(NULL, NULL);
     CHECK(!demo_clock_fields(&local) && local.valid && local.year == DEMO_CLOCK_BASE_YEAR &&
           local.month == DEMO_CLOCK_BASE_MONTH && local.day == DEMO_CLOCK_BASE_DAY);
     CHECK(!demo_clock_fields(NULL));
 
-    meter_core_t core;
+    hmi_core_t core;
     demo_domain_store_t store;
-    meter_core_storage_t storage = demo_domain_bind(&store);
-    CHECK(meter_core_init(&core, &meter_demo_catalog, &storage));
+    hmi_core_storage_t storage = demo_domain_bind(&store);
+    CHECK(hmi_core_init(&core, &meter_demo_catalog, &storage));
     lv_init();
-    CHECK(meter_i18n_init() && demo_i18n_init() && meter_host_open(true));
-    meter_ui_actions_t actions = {send, &core};
+    CHECK(hmi_i18n_init() && demo_i18n_init() && hmi_host_open(true));
+    hmi_ui_actions_t actions = {send, &core};
     demo_ui_t *ui = demo_ui_create(lv_screen_active(), &actions);
     CHECK(ui);
 
     /* 顶栏跟随来源：有源显示时间，无源显示占位符。 */
-    rtc_utc = (meter_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
-    meter_wall_clock_bind(read_rtc, NULL);
-    meter_wall_clock_bind_set(write_rtc, NULL);
+    rtc_utc = (hmi_wall_time_t){2026u, 10u, 1u, 0u, 30u, 0u, true};
+    hmi_wall_clock_bind(read_rtc, NULL);
+    hmi_wall_clock_bind_set(write_rtc, NULL);
     demo_ui_present(ui, &core.snapshot, 16);
     CHECK(!strcmp(lv_label_get_text(ui->clock), "08:30"));
-    meter_wall_clock_bind(NULL, NULL);
+    hmi_wall_clock_bind(NULL, NULL);
     demo_ui_present(ui, &core.snapshot, 16);
     CHECK(!strcmp(lv_label_get_text(ui->clock), "--:--"));
-    meter_wall_clock_bind(read_rtc, NULL);
+    hmi_wall_clock_bind(read_rtc, NULL);
 
     /* 对时在用户设置的第二页，而且是一个条目：无需任何权限，翻页即可到达。 */
     present(&core, ui);
@@ -184,7 +184,7 @@ int main(void)
     const unsigned before = actions_sent;
     roll(ui, DEMO_CLOCK_YEAR, 2029u - 2021u);
     CHECK(actions_sent == before + 1u);
-    CHECK(last_action.kind == METER_ACTION_PRODUCT);
+    CHECK(last_action.kind == HMI_ACTION_PRODUCT);
     CHECK(last_action.id == (uint16_t)(DEMO_INTENT_CLOCK_FIRST + DEMO_CLOCK_YEAR));
     CHECK(last_action.value == 2029.0f);
     /* 本地 2029-10-01 08:30 加东八区偏移写回，UTC 是同日 00:30。 */
@@ -201,7 +201,7 @@ int main(void)
 
     /* App 侧逐字段校验：范围、整数性与真实日历（月长、闰年）都要挡住。 */
     const unsigned settled = writes;
-    meter_action_t accepted = demo_clock_intent(DEMO_CLOCK_SECOND, 59.0f);
+    hmi_action_t accepted = demo_clock_intent(DEMO_CLOCK_SECOND, 59.0f);
     CHECK(demo_settings_action(&core.snapshot, &accepted, lv_tick_get()));
     CHECK(writes == settled + 1u);
     CHECK(field_rejected(&core, DEMO_CLOCK_YEAR, 2020.0f));
@@ -222,7 +222,7 @@ int main(void)
     CHECK(field_rejected(&core, DEMO_CLOCK_DAY, 29.0f));
     CHECK(field_set(&core, DEMO_CLOCK_YEAR, 2028.0f));
     const unsigned leap_base = writes;
-    meter_action_t leap = demo_clock_intent(DEMO_CLOCK_DAY, 29.0f);
+    hmi_action_t leap = demo_clock_intent(DEMO_CLOCK_DAY, 29.0f);
     CHECK(demo_settings_action(&core.snapshot, &leap, lv_tick_get()));
     CHECK(writes == leap_base + 1u);
 
@@ -233,7 +233,7 @@ int main(void)
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
         CHECK(lv_obj_has_flag(ui->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
     demo_settings_reset(1);
-    meter_action_t login = demo_settings_intent(DEMO_INTENT_ADMIN_LOGIN, 5312);
+    hmi_action_t login = demo_settings_intent(DEMO_INTENT_ADMIN_LOGIN, 5312);
     CHECK(demo_settings_action(&core.snapshot, &login, lv_tick_get()));
     present(&core, ui);
     CHECK(ui->view.admin_authorized && !lv_obj_has_flag(ui->admin_items[0], LV_OBJ_FLAG_HIDDEN));
@@ -261,10 +261,10 @@ int main(void)
     for (unsigned i = 0u; i < DEMO_CAN_RATE_OPTIONS; ++i)
         CHECK(lv_obj_has_flag(ui->rate_buttons[i], LV_OBJ_FLAG_HIDDEN));
 
-    meter_wall_clock_bind(NULL, NULL);
-    meter_wall_clock_bind_set(NULL, NULL);
+    hmi_wall_clock_bind(NULL, NULL);
+    hmi_wall_clock_bind_set(NULL, NULL);
     demo_ui_destroy(ui);
-    meter_host_close();
+    hmi_host_close();
     lv_deinit();
     puts("Wall-clock header, page-two roller fields, per-field App validation and CAN radio PASS");
     return 0;

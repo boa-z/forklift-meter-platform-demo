@@ -4,28 +4,28 @@
 #include <string.h>
 
 /* 量程内才取值；返回 false 表示该信号让整帧不新鲜。 */
-static bool measurement(const meter_snapshot_t *snapshot, meter_signal_id_t id, float maximum, float scale,
+static bool measurement(const hmi_snapshot_t *snapshot, hmi_signal_id_t id, float maximum, float scale,
                         uint16_t *out)
 {
-    const meter_value_t value = meter_snapshot_read(snapshot, id);
-    if (value.state != METER_VALUE_VALID || !isfinite(value.value) || value.value < 0.0f || value.value > maximum)
+    const hmi_value_t value = hmi_snapshot_read(snapshot, id);
+    if (value.state != HMI_VALUE_VALID || !isfinite(value.value) || value.value < 0.0f || value.value > maximum)
         return false;
     *out = (uint16_t)(value.value * scale);
     return true;
 }
-static bool flag(const meter_snapshot_t *snapshot, meter_signal_id_t id, bool *out)
+static bool flag(const hmi_snapshot_t *snapshot, hmi_signal_id_t id, bool *out)
 {
-    const meter_value_t value = meter_snapshot_read(snapshot, id);
-    if (value.state != METER_VALUE_VALID || (value.value != 0.0f && value.value != 1.0f))
+    const hmi_value_t value = hmi_snapshot_read(snapshot, id);
+    if (value.state != HMI_VALUE_VALID || (value.value != 0.0f && value.value != 1.0f))
         return false;
     *out = value.value != 0.0f;
     return true;
 }
-bool demo_pdo_encode(const meter_snapshot_t *snapshot, uint32_t now_ms, meter_can_frame_t *frame)
+bool demo_pdo_encode(const hmi_snapshot_t *snapshot, uint32_t now_ms, hmi_can_frame_t *frame)
 {
     (void)now_ms;
     static uint8_t motion_counter, status_counter;
-    if (!snapshot || !frame || frame->bus != METER_BUS_CAN0 || frame->extended || frame->remote ||
+    if (!snapshot || !frame || frame->bus != HMI_BUS_CAN0 || frame->extended || frame->remote ||
         (frame->id != DEMO_PDO_MOTION_ID && frame->id != DEMO_PDO_STATUS_ID))
         return false;
     memset(frame->data, 0, sizeof(frame->data));
@@ -53,7 +53,7 @@ bool demo_pdo_encode(const meter_snapshot_t *snapshot, uint32_t now_ms, meter_ca
     else
     {
         /* 位顺序与独立发送 DBC 一致；不把状态布尔值推断为整车安全结论。 */
-        static const meter_signal_id_t flags[] = {METER_SEAT, METER_BRAKE, METER_NEUTRAL, METER_CHARGING,
+        static const hmi_signal_id_t flags[] = {METER_SEAT, METER_BRAKE, METER_NEUTRAL, METER_CHARGING,
                                                   METER_WARNING};
         bool fresh = true;
         uint8_t bits = 0u;
