@@ -81,7 +81,7 @@ void demo_presentation_build(const hmi_snapshot_t *s, demo_presentation_t *out)
                                                           : DEMO_LINK_CONNECTED;
     for (size_t i = 0; i < DEMO_MONITOR_SLOTS; ++i)
     {
-        const hmi_monitor_def_t *definition = &meter_demo_catalog.monitors[i];
+        const demo_monitor_def_t *definition = &demo_monitors[i];
         view.monitors[i].reading = readout(s, definition->signal);
         view.monitors[i].unit = definition->unit;
     }

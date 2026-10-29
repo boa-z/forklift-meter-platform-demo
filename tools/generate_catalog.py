@@ -41,10 +41,16 @@ def generate():
                              ("DEMO_PARAMETER_SLOTS", len(data["parameters"])),
                              ("DEMO_MONITOR_SLOTS", len(data["monitors"])),
                              ("DEMO_FAULT_SLOTS", len(data["faults"]))])
-              + ["extern const hmi_catalog_t meter_demo_catalog;", "#endif", ""])
+              + ["/* 合成 CAN 解码写入的来源身份，与 protocol/can/domain-map.yaml 的 source 一致。 */",
+                 "#define DEMO_SOURCE_CAN 1u",
+                 "/* 监视页的一行：UI 怎样排列信号属于 Demo，不进 Framework 目录。 */",
+                 "typedef struct", "{", "    const char *key;", "    const char *unit;",
+                 "    hmi_signal_id_t signal;", "} demo_monitor_def_t;",
+                 "extern const hmi_catalog_t meter_demo_catalog;",
+                 "extern const demo_monitor_def_t demo_monitors[DEMO_MONITOR_SLOTS];", "#endif", ""])
     lines = [banner, '#include "generated/demo_catalog.h"']
-    def array(kind, key, formatter, rows):
-        lines.append(f"static const {kind} {key}[] = {{")
+    def array(kind, key, formatter, rows, storage="static "):
+        lines.append(f"{storage}const {kind} {key}[] = {{")
         lines.extend("    {" + formatter(row) + "}," for row in rows)
         lines.append("};")
     q = lambda s: json.dumps(s, ensure_ascii=True)
@@ -52,13 +58,12 @@ def generate():
     array("hmi_parameter_def_t", "parameters",
           lambda r: f'.id = {r[0]}, .key = {q(r[1])}, .unit = {q(r[2])}, .min = {float(r[3])}f, .max = {float(r[4])}f, .initial = {float(r[5])}f',
           data["parameters"])
-    array("hmi_monitor_def_t", "monitors", lambda r: f'{q(r[0])}, {q(r[1])}, {r[2]}', data["monitors"])
+    array("demo_monitor_def_t", "demo_monitors", lambda r: f'{q(r[0])}, {q(r[1])}, {r[2]}', data["monitors"], "")
     array("hmi_fault_def_t", "faults", lambda r: f'{r[0]}, {q(r[1])}, {q(r[2])}', data["faults"])
     lines += [
         "const hmi_catalog_t meter_demo_catalog = {",
         "    .signals = signals, .signal_count = sizeof(signals)/sizeof(signals[0]),",
         "    .parameters = parameters, .parameter_count = sizeof(parameters)/sizeof(parameters[0]),",
-        "    .monitors = monitors, .monitor_count = sizeof(monitors)/sizeof(monitors[0]),",
         "    .faults = faults, .fault_count = sizeof(faults)/sizeof(faults[0])", "};", ""]
     return [(ROOT / "generated/demo_catalog.h", "\n".join(header)),
             (ROOT / "generated/demo_catalog.c", "\n".join(lines))]

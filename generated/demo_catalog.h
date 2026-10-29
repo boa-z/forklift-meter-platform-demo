@@ -63,5 +63,15 @@ enum
     DEMO_MONITOR_SLOTS = 14,
     DEMO_FAULT_SLOTS = 10,
 };
+/* 合成 CAN 解码写入的来源身份，与 protocol/can/domain-map.yaml 的 source 一致。 */
+#define DEMO_SOURCE_CAN 1u
+/* 监视页的一行：UI 怎样排列信号属于 Demo，不进 Framework 目录。 */
+typedef struct
+{
+    const char *key;
+    const char *unit;
+    hmi_signal_id_t signal;
+} demo_monitor_def_t;
 extern const hmi_catalog_t meter_demo_catalog;
+extern const demo_monitor_def_t demo_monitors[DEMO_MONITOR_SLOTS];
 #endif

@@ -25,7 +25,6 @@ static float parameter_slots[DEMO_PARAMETER_SLOTS];
 static hmi_fault_state_t fault_slots[DEMO_FAULT_SLOTS];
 static const hmi_signal_def_t duplicate_signals[] = {{.id = METER_SPEED, .key = "speed"}, {.id = METER_SPEED, .key = "flow"}};
 static const hmi_signal_def_t anonymous_signals[] = {{.id = 0, .key = "gap"}};
-static const hmi_monitor_def_t dangling_monitor[] = {{"Gap", "gap", METER_WARNING + 100}};
 static const hmi_fault_def_t duplicate_faults[] = {{DEMO_FAULT_LOW_CHARGE, "one", "first"},
                                                      {DEMO_FAULT_LOW_CHARGE, "two", "second"}};
 static bool keep_first_source(void *context, hmi_signal_id_t signal, const hmi_value_t *incoming,
@@ -178,24 +177,13 @@ static int core(void)
     tight = storage();
     tight.parameters = NULL;
     CHECK(!hmi_core_init(&c, &meter_demo_catalog, &tight));
-    /* 监控项只是展示信息，因此没有监控项的产品依然拥有合法的域。 */
-    hmi_catalog_t monitorless = meter_demo_catalog;
-    monitorless.monitors = NULL;
-    monitorless.monitor_count = 0;
-    CHECK(hmi_core_init(&c, &monitorless, &bound));
     hmi_catalog_t ambiguous = meter_demo_catalog;
     ambiguous.signals = duplicate_signals;
     ambiguous.signal_count = SLOTS(duplicate_signals);
-    ambiguous.monitors = NULL;
-    ambiguous.monitor_count = 0;
     CHECK(!hmi_core_init(&c, &ambiguous, &bound));
     ambiguous.signals = anonymous_signals;
     ambiguous.signal_count = SLOTS(anonymous_signals);
     CHECK(!hmi_core_init(&c, &ambiguous, &bound));
-    hmi_catalog_t unresolved = meter_demo_catalog;
-    unresolved.monitors = dangling_monitor;
-    unresolved.monitor_count = SLOTS(dangling_monitor);
-    CHECK(!hmi_core_init(&c, &unresolved, &bound));
     hmi_catalog_t shared = meter_demo_catalog;
     shared.faults = duplicate_faults;
     shared.fault_count = SLOTS(duplicate_faults);

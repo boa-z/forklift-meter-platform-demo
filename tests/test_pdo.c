@@ -12,7 +12,7 @@ static void set_value(hmi_snapshot_t *snapshot, hmi_signal_id_t id, float value,
 {
     size_t index = hmi_catalog_index(snapshot->catalog, id);
     assert(index < snapshot->catalog->signal_count);
-    snapshot->signals[index] = (hmi_value_t){value, 1000u, state, HMI_SOURCE_DEMO};
+    snapshot->signals[index] = (hmi_value_t){value, 1000u, state, DEMO_SOURCE_CAN};
 }
 
 static void emit_vector(const char *name, const hmi_can_frame_t *frame)

@@ -39,7 +39,7 @@ static const hmi_parameter_def_t parameters[] = {
     {.id = 9, .key = "demo_cycle", .unit = "s", .min = 10.0f, .max = 120.0f, .initial = 40.0f},
     {.id = 10, .key = "steering_limit", .unit = "deg", .min = 10.0f, .max = 45.0f, .initial = 45.0f},
 };
-static const hmi_monitor_def_t monitors[] = {
+const demo_monitor_def_t demo_monitors[] = {
     {"Vehicle speed", "km/h", METER_SPEED},
     {"Battery charge", "%", METER_SOC},
     {"Lift height", "m", METER_HEIGHT},
@@ -70,6 +70,5 @@ static const hmi_fault_def_t faults[] = {
 const hmi_catalog_t meter_demo_catalog = {
     .signals = signals, .signal_count = sizeof(signals)/sizeof(signals[0]),
     .parameters = parameters, .parameter_count = sizeof(parameters)/sizeof(parameters[0]),
-    .monitors = monitors, .monitor_count = sizeof(monitors)/sizeof(monitors[0]),
     .faults = faults, .fault_count = sizeof(faults)/sizeof(faults[0])
 };

@@ -17,13 +17,13 @@ int main(void)
     /* 小时计必须保留快照有效性，不能把未知、过期或错误伪装成零。 */
     for (unsigned state = HMI_VALUE_UNKNOWN; state <= HMI_VALUE_ERROR; ++state)
     {
-        hmi_update_t hours = {METER_WORK_HOURS, {1246, 1, (hmi_value_state_t)state, HMI_SOURCE_DEMO}};
+        hmi_update_t hours = {METER_WORK_HOURS, {1246, 1, (hmi_value_state_t)state, DEMO_SOURCE_CAN}};
         bool applied = hmi_core_apply(&core, &hours);
         assert(applied);
         demo_presentation_build(&core.snapshot, &view);
         assert(view.hours.value == 1246 && view.hours.state == (hmi_value_state_t)state);
     }
-    hmi_update_t hours = {METER_WORK_HOURS, {0, 1, HMI_VALUE_VALID, HMI_SOURCE_DEMO}};
+    hmi_update_t hours = {METER_WORK_HOURS, {0, 1, HMI_VALUE_VALID, DEMO_SOURCE_CAN}};
     bool applied = hmi_core_apply(&core, &hours);
     assert(applied);
     demo_presentation_build(&core.snapshot, &view);
@@ -31,7 +31,7 @@ int main(void)
     hmi_core_connection(&core, true, 1);
     demo_presentation_build(&core.snapshot, &view);
     assert(view.link == DEMO_LINK_WAITING);
-    hmi_update_t update = {METER_SPEED, {10, 1, HMI_VALUE_VALID, HMI_SOURCE_DEMO}};
+    hmi_update_t update = {METER_SPEED, {10, 1, HMI_VALUE_VALID, DEMO_SOURCE_CAN}};
     assert(hmi_core_apply(&core, &update));
     assert(hmi_core_action(&core, &(hmi_action_t){HMI_ACTION_UNITS, 0, 1}));
     demo_presentation_build(&core.snapshot, &view);
