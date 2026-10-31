@@ -18,7 +18,8 @@ static bool demo_command_route(void *context, const hmi_command_t *command,
     return false;
 }
 /* 公开合成 Demo 参数为本机权威；真实远端参数由其 Product 排除持久化。 */
-static const hmi_storage_profile_t storage_profile = {true, 1u, 0x444Du, 3u, 500u, 3000u};
+/* always_writable=false：保持默认口径，未知内容不覆盖、写失败后需显式重试。 */
+static const hmi_storage_profile_t storage_profile = {true, 1u, 0x444Du, 3u, 500u, 3000u, false};
 /* 公开合成台架仅由本机维护开关准入；真实 Product 必须增加驻车/车速策略。 */
 static bool update_admission(const hmi_snapshot_t *snapshot, bool maintenance)
 {
