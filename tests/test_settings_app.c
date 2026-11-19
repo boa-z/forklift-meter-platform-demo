@@ -1,8 +1,7 @@
-#include "services/settings_app.h"
 #include "application/presentation.h"
 #include "core/hmi_core.h"
-#include "core/hmi_settings.h"
 #include "product/demo_storage.h"
+#include "services/settings_app.h"
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -113,15 +112,12 @@ int main(void)
     view = present(&core);
     assert(!view.admin_authorized);
     assert(memcmp(local, core.snapshot.parameters, sizeof(local)) == 0);
-    /* 模拟重启：只恢复保留设置，不恢复管理员权限或远端事务。 */
-    uint8_t retained[256];
-    assert(hmi_settings_encode(&core, retained, sizeof(retained)));
+    /* 模拟重启：Demo 重新从出厂设置和未授权状态开始。 */
     assert(hmi_core_init(&core, &meter_demo_catalog, &storage));
     assert(core.snapshot.can_rate == HMI_CAN_RATE_500K);
-    assert(hmi_settings_decode(&core, retained, hmi_settings_size(&core)));
     view = present(&core);
-    assert(view.admin_values[0] == 1 && !view.admin_authorized);
+    assert(view.admin_values[0] == 2 && !view.admin_authorized);
     assert(!intent(DEMO_INTENT_ADMIN_FIRST, 2, 60003));
-    assert(core.snapshot.can_rate == HMI_CAN_RATE_250K);
+    assert(core.snapshot.can_rate == HMI_CAN_RATE_500K);
     return 0;
 }

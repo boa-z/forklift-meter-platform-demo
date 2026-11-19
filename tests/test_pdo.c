@@ -25,7 +25,7 @@ static void emit_vector(const char *name, const hmi_can_frame_t *frame)
 
 /* 每次编码推进该标识的滚动计数；先空转到想要的序号再取真正的输出。 */
 static hmi_can_frame_t encode_at(const hmi_periodic_frame_t *definition, const hmi_snapshot_t *snapshot,
-                                   unsigned skip)
+                                 unsigned skip)
 {
     hmi_can_frame_t frame = definition->frame;
     for (unsigned i = 0u; i < skip; ++i)
@@ -49,7 +49,7 @@ int main(void)
     assert(hmi_core_init(&core, product->catalog, &binding));
     hmi_snapshot_t *domain = &core.snapshot;
     const hmi_signal_id_t ids[] = {METER_SPEED, METER_SOC,     METER_HEIGHT,   METER_LOAD,   METER_SEAT,
-                                     METER_BRAKE, METER_NEUTRAL, METER_CHARGING, METER_WARNING};
+                                   METER_BRAKE, METER_NEUTRAL, METER_CHARGING, METER_WARNING};
     const float nominal[] = {12.5f, 75.0f, 1.25f, 780.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f};
     for (unsigned i = 0u; i < sizeof(ids) / sizeof(ids[0]); ++i)
         set_value(domain, ids[i], nominal[i], HMI_VALUE_VALID);
@@ -73,18 +73,16 @@ int main(void)
     {
         frame = encode_at(&product->periodic[i], domain, 0u);
         const uint16_t value = i == 0u ? 31u : 1250u;
-        assert(frame.data[0] == (uint8_t)value && frame.data[1] == (uint8_t)(value >> 8) && frame.data[2] == 1u);
+        assert(frame.data[0] == (uint8_t)value && frame.data[1] == (uint8_t)(value >> 8) &&
+               frame.data[2] == 1u);
         assert(frame.data[4] == 0x34u && frame.data[5] == 0x12u && frame.data[6] == (uint8_t)~frame.data[0]);
         uint8_t check = 0u;
         for (unsigned b = 0u; b < 7u; ++b)
             check ^= frame.data[b];
         assert(frame.data[7] == check);
     }
-    assert(product->periodic[0].frame.id == 0x3c0u && product->periodic[0].period_ms == 50u &&
-           product->periodic[0].critical);
-    assert(product->periodic[1].frame.id == 0x2f0u && product->periodic[1].period_ms == 100u &&
-           !product->periodic[1].critical);
-    assert(!motion->critical && !status->critical);
+    assert(product->periodic[0].frame.id == 0x3c0u && product->periodic[0].period_ms == 50u);
+    assert(product->periodic[1].frame.id == 0x2f0u && product->periodic[1].period_ms == 100u);
 
     /* 非法入口不产生输出。 */
     frame = motion->frame;

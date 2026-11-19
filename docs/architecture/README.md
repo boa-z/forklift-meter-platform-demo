@@ -6,7 +6,7 @@
 
 [Source manifest](../../product/sources.json) selects Product sources. [Product composition](../../product/product.c) binds its catalog, routes, settings, policies and UI. [Firmware composition](../../product/firmware.c) provides distinct domain, presentation, diagnostic and UI stores plus locale initialization.
 
-CAN adapters publish semantic values to Framework runtime/Core. Product application code creates presentation; LVGL renders it and submits intents. Local settings workflow belongs in `services/`, not in widget callbacks. Shared transport, persistence and update implementation stay in Framework.
+CAN adapters publish semantic values to Framework runtime/Core. Product application code creates presentation; LVGL renders it and submits intents. Local settings workflow belongs in `services/`, not in widget callbacks. Shared transport stays in the Framework. Demo settings apply to the current run.
 
 ## Authoritative inputs
 

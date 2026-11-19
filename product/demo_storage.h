@@ -1,18 +1,16 @@
 #ifndef DEMO_STORAGE_H
 #define DEMO_STORAGE_H
-#include "core/hmi_settings.h"
+#include "contracts/hmi_domain.h"
 #include "generated/demo_catalog.h"
 /** @brief Demo 产品的全部域内存。
  *
  * 槽位数与目录条目同源，扩大产品只需改 schema，永远不需要改动平台。整块为静态存储，不含堆。
- * settings 尾部紧跟参数区，长度由 hmi_settings_size() 决定。
  */
 typedef struct
 {
     hmi_value_t signals[DEMO_SIGNAL_SLOTS];
     float parameters[DEMO_PARAMETER_SLOTS];
     hmi_fault_state_t faults[DEMO_FAULT_SLOTS];
-    uint8_t settings[HMI_SETTINGS_OVERHEAD + DEMO_PARAMETER_SLOTS * HMI_SETTINGS_ENTRY_SIZE];
 } demo_domain_store_t;
 /** @brief 把产品存储绑定为 core 需要的形式。
  *

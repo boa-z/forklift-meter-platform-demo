@@ -1,5 +1,4 @@
 #include "core/hmi_core.h"
-#include "core/hmi_settings.h"
 #include "generated/demo_catalog.h"
 #include "protocol/demo_protocol.h"
 #include "protocols/common/hmi_frame_router.h"
@@ -23,10 +22,11 @@
 static hmi_value_t signal_slots[DEMO_SIGNAL_SLOTS];
 static float parameter_slots[DEMO_PARAMETER_SLOTS];
 static hmi_fault_state_t fault_slots[DEMO_FAULT_SLOTS];
-static const hmi_signal_def_t duplicate_signals[] = {{.id = METER_SPEED, .key = "speed"}, {.id = METER_SPEED, .key = "flow"}};
+static const hmi_signal_def_t duplicate_signals[] = {{.id = METER_SPEED, .key = "speed"},
+                                                     {.id = METER_SPEED, .key = "flow"}};
 static const hmi_signal_def_t anonymous_signals[] = {{.id = 0, .key = "gap"}};
 static const hmi_fault_def_t duplicate_faults[] = {{DEMO_FAULT_LOW_CHARGE, "one", "first"},
-                                                     {DEMO_FAULT_LOW_CHARGE, "two", "second"}};
+                                                   {DEMO_FAULT_LOW_CHARGE, "two", "second"}};
 static bool keep_first_source(void *context, hmi_signal_id_t signal, const hmi_value_t *incoming,
                               const hmi_value_t *current)
 {
@@ -37,29 +37,12 @@ static bool keep_first_source(void *context, hmi_signal_id_t signal, const hmi_v
 static hmi_core_storage_t storage(void)
 {
     return (hmi_core_storage_t){signal_slots,           SLOTS(signal_slots), parameter_slots,
-                                  SLOTS(parameter_slots), fault_slots,         SLOTS(fault_slots)};
-}
-/* 设置块是公开文档化的格式，所以测试可以直接伪造一个合法文件，
- * 而不是只破坏字节直到校验和报错。 */
-static void store_float(uint8_t *p, float value)
-{
-    uint32_t bits;
-    memcpy(&bits, &value, 4);
-    for (unsigned i = 0; i < 4; ++i)
-        p[i] = (uint8_t)(bits >> (8 * i));
-}
-static void seal(uint8_t *bytes, size_t size)
-{
-    uint32_t hash = 2166136261u;
-    for (size_t i = 0; i + 4 < size; ++i)
-        hash = (hash ^ bytes[i]) * 16777619u;
-    for (unsigned i = 0; i < 4; ++i)
-        bytes[size - 4 + i] = (uint8_t)(hash >> (8 * i));
+                                SLOTS(parameter_slots), fault_slots,         SLOTS(fault_slots)};
 }
 static const hmi_frame_route_t routes[] = {{HMI_BUS_CAN0, 0x100, false, 1},
-                                             {HMI_BUS_CAN1, 0x100, false, 2},
-                                             {HMI_BUS_CAN0, 0x100, true, 2},
-                                             {HMI_BUS_CAN1, 0x1abc123, true, 2}};
+                                           {HMI_BUS_CAN1, 0x100, false, 2},
+                                           {HMI_BUS_CAN0, 0x100, true, 2},
+                                           {HMI_BUS_CAN1, 0x1abc123, true, 2}};
 static const hmi_route_profile_t route_profile = {routes, 4};
 static bool noop(const hmi_can_frame_t *f, hmi_update_sink_t sink, void *context)
 {
@@ -289,75 +272,19 @@ static int widgets(void)
 }
 static int settings(void)
 {
-    hmi_core_t a, b;
-    hmi_core_storage_t sa = storage(), sb = storage();
-    CHECK(hmi_core_init(&a, &meter_demo_catalog, &sa));
-    CHECK(hmi_core_init(&b, &meter_demo_catalog, &sb));
-    hmi_action_t u = {HMI_ACTION_UNITS, 0, 1};
-    CHECK(hmi_core_action(&a, &u));
-    u.kind = HMI_ACTION_LANGUAGE;
-    u.value = HMI_LANGUAGE_ZH;
-    CHECK(hmi_core_action(&a, &u));
-    CHECK(hmi_core_parameter(&a, DEMO_PARAMETER_MAX_SPEED, 33));
-    uint8_t bytes[128];
-    /* 块长度随产品目录增长，而不是随平台容量上限增长。 */
-    size_t size = hmi_settings_size(&a);
-    CHECK(a.snapshot.can_rate == HMI_CAN_RATE_500K);
-    a.snapshot.can_rate = HMI_CAN_RATE_250K;
-    CHECK(size == HMI_SETTINGS_OVERHEAD + meter_demo_catalog.parameter_count * HMI_SETTINGS_ENTRY_SIZE);
-    CHECK(!hmi_settings_encode(&a, bytes, size - 1));
-    CHECK(hmi_settings_encode(&a, bytes, sizeof(bytes)));
-    CHECK(hmi_settings_decode(&b, bytes, size));
-    CHECK(!memcmp(bytes, "MSP3", 4) && b.snapshot.can_rate == HMI_CAN_RATE_250K);
-    uint32_t revision = b.snapshot.revision;
-    CHECK(hmi_settings_decode(&b, bytes, size) && b.snapshot.revision == revision);
-    uint8_t legacy[128];
-    memcpy(legacy, bytes, size);
-    memcpy(legacy, "MSP2", 4);
-    legacy[7] = 0;
-    seal(legacy, size);
-    CHECK(!hmi_settings_decode(&b, legacy, size));
-    CHECK(b.snapshot.can_rate == HMI_CAN_RATE_250K && b.snapshot.revision == revision);
-    legacy[7] = 1;
-    seal(legacy, size);
-    CHECK(!hmi_settings_decode(&b, legacy, size));
-    memcpy(legacy, bytes, size);
-    legacy[7] = 3;
-    seal(legacy, size);
-    CHECK(!hmi_settings_decode(&b, legacy, size));
-    CHECK(b.snapshot.can_rate == HMI_CAN_RATE_250K && b.snapshot.revision == revision);
-    a.snapshot.can_rate = (hmi_can_rate_t)3;
-    CHECK(!hmi_settings_encode(&a, legacy, sizeof(legacy)));
-    a.snapshot.can_rate = HMI_CAN_RATE_250K;
-    float stored = 0;
-    CHECK(b.snapshot.imperial && b.snapshot.language == HMI_LANGUAGE_ZH && b.snapshot.brightness == 80);
-    CHECK(hmi_snapshot_parameter(&b.snapshot, DEMO_PARAMETER_MAX_SPEED, &stored) && stored == 33);
-    bytes[8] ^= 1;
-    CHECK(!hmi_settings_decode(&b, bytes, size));
-    /* 所有取值先整体校验再写入，被拒绝的文件不会让 core 停在半应用状态。
-     * 结构体副本已检测不到这种问题：存储由调用方绑定后，两个副本共享同一组产品数组。 */
-    CHECK(hmi_snapshot_parameter(&b.snapshot, DEMO_PARAMETER_MAX_SPEED, &stored) && stored == 33);
-    CHECK(b.snapshot.imperial && b.snapshot.language == HMI_LANGUAGE_ZH && b.snapshot.brightness == 80);
-    bytes[8] ^= 1;
-    CHECK(!hmi_settings_decode(&b, bytes, 4));
-    CHECK(!hmi_settings_decode(&b, bytes, size - 4));
-    uint8_t foreign[128];
-    memcpy(foreign, bytes, sizeof(foreign));
-    foreign[6] = (uint8_t)(meter_demo_catalog.parameter_count - 1);
-    CHECK(!hmi_settings_decode(&b, foreign, HMI_SETTINGS_OVERHEAD + foreign[6] * 4u));
-    /* 格式完整但含一个越界参数的文件必须整体拒绝。第一项故意留在合法区间内，
-     * 任何边校验边写入的解码器都会把它落进 core。 */
-    uint8_t poisoned[128];
-    memcpy(poisoned, bytes, sizeof(poisoned));
-    store_float(poisoned + 16, 44.0f);
-    store_float(poisoned + 24, 1000.0f);
-    seal(poisoned, size);
-    CHECK(!hmi_settings_decode(&b, poisoned, size));
-    CHECK(hmi_snapshot_parameter(&b.snapshot, DEMO_PARAMETER_MAX_SPEED, &stored) && stored == 33);
-    CHECK(hmi_snapshot_parameter(&b.snapshot, meter_demo_catalog.parameters[1].id, &stored) &&
-          stored == meter_demo_catalog.parameters[1].initial);
-    u.value = 2;
-    CHECK(!hmi_core_action(&a, &u));
+    hmi_core_t core_state;
+    hmi_core_storage_t bound = storage();
+    CHECK(hmi_core_init(&core_state, &meter_demo_catalog, &bound));
+    const hmi_action_t units = {HMI_ACTION_UNITS, 0, 1};
+    const hmi_action_t language = {HMI_ACTION_LANGUAGE, 0, HMI_LANGUAGE_ZH};
+    CHECK(hmi_core_action(&core_state, &units));
+    CHECK(hmi_core_action(&core_state, &language));
+    CHECK(hmi_core_parameter(&core_state, DEMO_PARAMETER_MAX_SPEED, 33));
+    float speed = 0;
+    CHECK(hmi_snapshot_parameter(&core_state.snapshot, DEMO_PARAMETER_MAX_SPEED, &speed) && speed == 33);
+    CHECK(core_state.snapshot.imperial && core_state.snapshot.language == HMI_LANGUAGE_ZH);
+    const hmi_action_t invalid = {HMI_ACTION_LANGUAGE, 0, 2};
+    CHECK(!hmi_core_action(&core_state, &invalid));
     return 0;
 }
 int main(int argc, char **argv)

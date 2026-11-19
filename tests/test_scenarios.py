@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import tempfile
 exe = Path(sys.argv[1]).resolve()
 env = dict(os.environ, SDL_VIDEODRIVER="dummy")
 def run(*args):
@@ -37,18 +36,6 @@ for args in (("--subpage", "1"), ("--page", "1", "--subpage", "2"),
     assert invalid.returncode == 2
 invalid = subprocess.run([str(exe), "--set-language", "unsupported"], env=env, capture_output=True, timeout=25)
 assert invalid.returncode == 2
-with tempfile.TemporaryDirectory() as temp:
-    settings=str(Path(temp)/"preferences.bin")
-    assert run("--settings",settings,"--set-units","imperial")["imperial"]
-    assert run("--settings",settings)["imperial"]
-    assert run("--settings", settings, "--set-language", "chinese")["language"] == "zh-CN"
-    assert run("--settings", settings)["language"] == "zh-CN"
-    assert run("--settings", settings, "--set-language", "english")["language"] == "en"
-    assert run("--settings", settings)["language"] == "en"
-    Path(settings + ".0").write_bytes(b"corrupt")
-    Path(settings + ".1").write_bytes(b"corrupt")
-    failed = subprocess.run([str(exe), "--hidden", "--frames", "2", "--settings", settings], env=env, capture_output=True, timeout=25)
-    assert failed.returncode == 7
-    assert Path(settings + ".0").read_bytes() == b"corrupt"
-    assert Path(settings + ".1").read_bytes() == b"corrupt"
-print("Demo scenarios, touch navigation and settings restart PASS")
+assert run("--set-units", "imperial")["imperial"]
+assert not run("--set-units", "metric")["imperial"]
+print("Demo scenarios, touch navigation and settings actions PASS")

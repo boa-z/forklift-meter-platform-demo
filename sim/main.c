@@ -1,17 +1,16 @@
-#include "platform/host/host_platform.h"
 #include "contracts/hmi_wall_clock.h"
+#include "platform/host/host_platform.h"
 #include "product/demo_storage.h"
 #include "product/product.h"
 #include "runtime/hmi_runtime.h"
 #include "sim/domain_fixture.h"
 #include "sim/synthetic.h"
 #include "ui/common/i18n/hmi_i18n_runtime.h"
-#include "ui/widgets/meter_widgets.h"
 #include "ui/demo_i18n.h"
 #include "ui/demo_ui.h"
+#include "ui/widgets/meter_widgets.h"
 #include <stdio.h>
 #define SDL_MAIN_HANDLED
-#include "platform/host/host_settings.h"
 #include <SDL.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +18,6 @@ typedef struct
 {
     hmi_core_t *core;
     const hmi_product_t *product;
-    hmi_host_nvm_t *nvm;
 } action_context_t;
 /* 主机没有硬件 RTC，也不该读到宿主机时间：截图与断言需要逐帧可复现。
    固定在 2026-10-01T00:30Z，经 Product 的东八区偏移即顶栏 08:30。
@@ -41,20 +39,17 @@ static bool sim_clock_write(const hmi_wall_time_t *utc, void *context)
 static bool action(void *context, const hmi_action_t *a)
 {
     action_context_t *c = context;
-    bool applied = a->kind == HMI_ACTION_PRODUCT
-        ? c->product->local_action && c->product->local_action(&c->core->snapshot, a, SDL_GetTicks())
-        : hmi_core_action(c->core, a);
-    if (!applied)
-        return false;
-    /* 保存请求不回滚已应用的 RAM；失败由 NVM 状态单独报告。 */
-    (void)hmi_host_nvm_changed(c->nvm, SDL_GetTicks());
-    return true;
+    bool applied =
+        a->kind == HMI_ACTION_PRODUCT
+            ? c->product->local_action && c->product->local_action(&c->core->snapshot, a, SDL_GetTicks())
+            : hmi_core_action(c->core, a);
+    return applied;
 }
 int main(int argc, char **argv)
 {
     unsigned frames = 0, page = 0, subpage = 0;
     bool smoke = false, hidden = false;
-    const char *capture = NULL, *settings = NULL, *visual = NULL, *set_units = NULL, *set_language = NULL;
+    const char *capture = NULL, *visual = NULL, *set_units = NULL, *set_language = NULL;
     demo_scenario_t scenario = DEMO_NORMAL;
     const char *fixture = NULL;
     for (int i = 1; i < argc; ++i)
@@ -73,8 +68,6 @@ int main(int argc, char **argv)
             frames = (unsigned)strtoul(argv[++i], NULL, 10);
         else if (!strcmp(argv[i], "--capture") && i + 1 < argc)
             capture = argv[++i];
-        else if (!strcmp(argv[i], "--settings") && i + 1 < argc)
-            settings = argv[++i];
         else if (!strcmp(argv[i], "--visual") && i + 1 < argc)
             visual = argv[++i];
         else if (!strcmp(argv[i], "--set-units") && i + 1 < argc)
@@ -112,8 +105,8 @@ int main(int argc, char **argv)
         {
             printf("Usage: hmi-sim [--smoke] [--frames N] [--hidden] [--scenario "
                    "normal|warning|stale|offline|error|unknown] [--visual "
-                   "min|mid|max] [--capture image.bmp] [--page 0..3] [--subpage 0..1] [--settings "
-                   "file] [--set-units metric|imperial] [--set-language english|chinese] "
+                   "min|mid|max] [--capture image.bmp] [--page 0..3] [--subpage 0..1] "
+                   "[--set-units metric|imperial] [--set-language english|chinese] "
                    "\n");
             return !strcmp(argv[i], "--help") ? 0 : 2;
         }
@@ -131,19 +124,7 @@ int main(int argc, char **argv)
     if (!hmi_core_init(&core, product->catalog, &storage) ||
         !hmi_runtime_init(&runtime, product, hmi_core_apply, &core))
         return 3;
-    hmi_host_nvm_t *nvm =
-        hmi_host_nvm_open(&core, settings, product->storage->product_namespace, product->storage->schema);
-    if (settings && !nvm)
-        return 7;
-    uint32_t load_start = SDL_GetTicks();
-    while (nvm && hmi_host_nvm_status(nvm)->state == HMI_NVM_LOADING)
-    {
-        hmi_host_nvm_poll(nvm, SDL_GetTicks());
-        if ((uint32_t)(SDL_GetTicks() - load_start) > 3000u)
-            return 7;
-        SDL_Delay(1);
-    }
-    action_context_t act = {&core, product, nvm};
+    action_context_t act = {&core, product};
     hmi_ui_actions_t actions = {action, &act};
     if (set_units)
     {
@@ -154,7 +135,7 @@ int main(int argc, char **argv)
     if (set_language)
     {
         hmi_action_t a = {HMI_ACTION_LANGUAGE, 0,
-                            !strcmp(set_language, "chinese") ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN};
+                          !strcmp(set_language, "chinese") ? HMI_LANGUAGE_ZH : HMI_LANGUAGE_EN};
         if (!action(&act, &a))
             return 4;
     }
@@ -232,7 +213,6 @@ int main(int argc, char **argv)
         lv_tick_inc(16);
         uint64_t start = hmi_host_counter();
         product->ui->present(ui, &core.snapshot, 16);
-        hmi_host_nvm_poll(nvm, SDL_GetTicks());
         lv_timer_handler();
         double us = hmi_host_us(start, hmi_host_counter());
         sum_us += us;
@@ -273,14 +253,12 @@ int main(int argc, char **argv)
            pass ? "PASS" : "FAIL", completed, (unsigned)objects,
            (unsigned)meter_ui_object_count(lv_screen_active()), (unsigned)heap_peak,
            completed ? sum_us / completed : 0, max_us, (unsigned)runtime.diagnostics.dispatched,
-           (unsigned)runtime.diagnostics.decode_failed, active_faults,
-           fault_ids, (unsigned)speed.state, (double)speed.value, core.snapshot.imperial ? "true" : "false",
+           (unsigned)runtime.diagnostics.decode_failed, active_faults, fault_ids, (unsigned)speed.state,
+           (double)speed.value, core.snapshot.imperial ? "true" : "false",
            core.snapshot.language == HMI_LANGUAGE_ZH ? "zh-CN" : "en", demo_ui_active_page(ui),
            demo_ui_active_subpage(ui));
     product->ui->destroy(ui);
-    bool durable = hmi_host_nvm_close(nvm, 5000u);
     hmi_host_close();
     lv_deinit();
-    return pass && durable ? 0 : 7;
+    return pass ? 0 : 7;
 }
-

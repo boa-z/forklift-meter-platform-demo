@@ -6,7 +6,7 @@
 
 [源码清单](../../product/sources.json)选择 Product 源码。[Product 组合](../../product/product.c)绑定目录、路由、设置、策略及 UI。[固件组合](../../product/firmware.c)提供独立的 domain、presentation、diagnostic、UI 存储及语言初始化。
 
-CAN 适配器向 Framework runtime/Core 发布语义值。Product 应用层生成呈现，LVGL 负责显示并提交意图。本机设置工作流放在 `services/`，不在控件回调中解释。共享传输、持久化及更新实现保留在 Framework。
+CAN 适配器向 Framework runtime/Core 发布语义值。Product 应用层生成呈现，LVGL 负责显示并提交意图。本机设置工作流放在 `services/`，不在控件回调中解释。共享传输由 Framework 提供。Demo 设置仅在本次运行有效。
 
 ## 权威输入
 

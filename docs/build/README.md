@@ -8,7 +8,7 @@ Run the following commands in the consuming Framework root, where this repositor
 
 ```text
 git submodule update --init --recursive
-python -m pip install -r tools/protocol/requirements.txt -r tools/hil/requirements.txt -r tools/ota/requirements.txt
+python -m pip install -r tools/protocol/requirements.txt -r tools/hil/requirements.txt
 cmake -S . -B build-demo -G Ninja -DCMAKE_BUILD_TYPE=Debug -DHMI_PRODUCT_ROOT=products/demo -DHMI_ENABLE_UPDATE=ON
 cmake --build build-demo --parallel
 ctest --test-dir build-demo --output-on-failure
