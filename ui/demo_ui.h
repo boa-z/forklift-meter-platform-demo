@@ -7,6 +7,4 @@ void demo_ui_destroy(void *ui);
 unsigned demo_ui_active_page(const void *ui);
 unsigned demo_ui_active_subpage(const void *ui);
 /** @brief 展示只读升级状态；preview 为 Host 演示标记，不操作设备。 */
-void demo_ui_update(void *ui, const hmi_update_view_t *view, hmi_language_t language);
-void demo_ui_update_preview(void *ui, const hmi_update_view_t *view, hmi_language_t language);
 #endif

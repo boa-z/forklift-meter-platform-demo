@@ -26,7 +26,6 @@
     "ui/widgets/meter_linear_meter.c",
     "ui/widgets/meter_status.c",
     "ui/widgets/meter_value_label.c",
-    "ui/widgets/meter_update_widget.c",
     "generated/meter_demo_cjk_14.c",
     "generated/meter_demo_cjk_20.c",
     "generated/demo_icons.c"

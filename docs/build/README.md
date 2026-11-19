@@ -44,8 +44,6 @@ The exporter runs one SDL2 process per gallery image using the dummy video drive
 
 
 
-## Firmware and CAN OTA
+## Firmware
 
-Select this Product with `HMI_PRODUCT_ROOT` in the Framework SDK integration. Follow Framework `docs/build/build.md` and `docs/ota/can-update.md` for SDK image creation, package creation and CAN installation. Board setup and transport are Framework/SDK responsibilities; do not copy a second OTA implementation into this Product.
-
-The gallery's update view is only `--update-preview download`; it neither constructs an OTA package nor transfers or installs firmware. A real OTA result needs the board's before/after identity and captured transport logs.
+Select this Product with `HMI_PRODUCT_ROOT` in the Framework SDK integration and follow Framework `docs/build/build.md` to build the SDK image.

@@ -108,7 +108,6 @@ void *demo_ui_create(void *parent, const hmi_ui_actions_t *actions)
     lv_obj_move_foreground(u->parameter_editor);
     lv_obj_move_foreground(u->password_editor);
     demo_navigation_show(u, 0);
-    meter_update_widget_create(&u->update_widget, u->root);
     return u;
 }
 void demo_ui_present(void *context, const hmi_snapshot_t *snapshot, uint32_t elapsed)
@@ -163,37 +162,4 @@ unsigned demo_ui_active_subpage(const void *context)
     default:
         return 0;
     }
-}
-
-static void present_update(void *context, const hmi_update_view_t *view, hmi_language_t language,
-                           bool preview)
-{
-    demo_ui_t *u = context;
-    const demo_text_id_t phases[] = {
-        DEMO_TXT_OTA_IDLE,      DEMO_TXT_OTA_DOWNLOADING, DEMO_TXT_OTA_TRANSFERRED, DEMO_TXT_OTA_VERIFYING,
-        DEMO_TXT_OTA_CANDIDATE, DEMO_TXT_OTA_DURABLE,     DEMO_TXT_OTA_ACTIVATING,  DEMO_TXT_OTA_ACTIVATED,
-        DEMO_TXT_OTA_CONFIRMED, DEMO_TXT_OTA_ABORTED,     DEMO_TXT_OTA_FAILED};
-    demo_text_id_t phase = DEMO_TXT_OTA_FAILED;
-    if ((unsigned)view->state < sizeof(phases) / sizeof(phases[0]))
-        phase = phases[view->state];
-    (void)hmi_i18n_set_language(language);
-    meter_update_widget_text_t text = {
-        demo_i18n_text(DEMO_TXT_OTA_TITLE),
-        demo_i18n_text(phase),
-        demo_i18n_text(view->state == HMI_UPDATE_ABORTED || view->state == HMI_UPDATE_FAILED
-                           ? DEMO_TXT_OTA_STOPPED
-                           : DEMO_TXT_OTA_NOTE),
-        demo_i18n_text(DEMO_TXT_OTA_CURRENT),
-        demo_i18n_text(DEMO_TXT_OTA_TARGET),
-        demo_i18n_text(DEMO_TXT_OTA_ERROR),
-        preview ? demo_i18n_text(DEMO_TXT_OTA_PREVIEW) : ""};
-    meter_update_widget_present(&u->update_widget, view, &text, language);
-}
-void demo_ui_update(void *ui, const hmi_update_view_t *view, hmi_language_t language)
-{
-    present_update(ui, view, language, false);
-}
-void demo_ui_update_preview(void *ui, const hmi_update_view_t *view, hmi_language_t language)
-{
-    present_update(ui, view, language, true);
 }

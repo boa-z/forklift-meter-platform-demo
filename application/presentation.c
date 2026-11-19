@@ -1,9 +1,6 @@
 #include "application/presentation.h"
 #include "hmi_build_identity.h"
 #include <stdio.h>
-#ifdef HMI_ENABLE_CAN_UPDATE
-#include "hmi_update_build.h"
-#endif
 /* 占位符与 "HH:MM" 同长，所以时钟盒在可用与不可用之间切换时不会重排顶栏。 */
 static const char clock_placeholder[] = "--:--";
 
@@ -47,9 +44,6 @@ static demo_readout_t readout(const hmi_snapshot_t *snapshot, hmi_signal_id_t id
 void demo_presentation_build(const hmi_snapshot_t *s, demo_presentation_t *out)
 {
     demo_presentation_t view = {0};
-#ifdef HMI_ENABLE_CAN_UPDATE
-    view.firmware_version = HMI_UPDATE_FIRMWARE_VERSION;
-#endif
     view.framework_revision = HMI_BUILD_PLATFORM;
     view.revision = s->revision;
     view.profile = s->profile;

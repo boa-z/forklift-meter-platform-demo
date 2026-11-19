@@ -2,7 +2,6 @@
 #include "generated/demo_catalog.h"
 #include "protocol/can/demo_pdo.h"
 #include "services/settings_app.h"
-#include "update/hmi_update.h"
 #ifdef HMI_HEADLESS
 #define PRODUCT_UI NULL
 #else
@@ -20,16 +19,6 @@ static bool demo_command_route(void *context, const hmi_command_t *command,
 /* 公开合成 Demo 参数为本机权威；真实远端参数由其 Product 排除持久化。 */
 /* always_writable=false：保持默认口径，未知内容不覆盖、写失败后需显式重试。 */
 static const hmi_storage_profile_t storage_profile = {true, 1u, 0x444Du, 3u, 500u, 3000u, false};
-/* 公开合成台架仅由本机维护开关准入；真实 Product 必须增加驻车/车速策略。 */
-static bool update_admission(const hmi_snapshot_t *snapshot, bool maintenance)
-{
-    (void)snapshot;
-    return maintenance;
-}
-static const hmi_update_policy_t update_policy = {.product = "reference-demo",
-                                                    .hardware = "reference-board",
-                                                    .max_size = 4u * 1024u * 1024u + 2048u,
-                                                    .timeout_ms = 15000u};
 /**
  * @brief 公开合成协议的两条状态帧：0x3c0 是亮度（总是新鲜），0x2f0 是车速（VALID 且在量程内才新鲜）。
  * 布局：数值、fresh、滚动计数、快照 revision 低 16 位、反码及异或校验。
@@ -62,9 +51,8 @@ static bool tx_encode(const hmi_snapshot_t *snapshot, uint32_t now, hmi_can_fram
         frame->data[7] ^= frame->data[i];
     return true;
 }
-/* 0x3c0 为关键帧：升级维护期间仍发送。 */
 static const hmi_periodic_frame_t periodic[] = {
-    {.frame = {.bus = HMI_BUS_CAN0, .id = 0x3c0u}, .period_ms = 50u, .critical = true, .encode = tx_encode},
+    {.frame = {.bus = HMI_BUS_CAN0, .id = 0x3c0u}, .period_ms = 50u, .encode = tx_encode},
     {.frame = {.bus = HMI_BUS_CAN0, .id = 0x2f0u}, .period_ms = 100u, .encode = tx_encode},
     {.frame = {.bus = HMI_BUS_CAN0, .id = DEMO_PDO_MOTION_ID}, .period_ms = 100u, .encode = demo_pdo_encode},
     {.frame = {.bus = HMI_BUS_CAN0, .id = DEMO_PDO_STATUS_ID}, .period_ms = 100u, .encode = demo_pdo_encode}};
@@ -76,9 +64,6 @@ static const hmi_product_t product = {.id = "reference-demo",
                                         .app_tick = meter_demo_evaluate,
                                         .command_route = demo_command_route,
                                         .storage = &storage_profile,
-                                        .update = &update_policy,
-                                        .update_admission = update_admission,
-                                        .update_exclusive = true,
                                         .local_action = demo_settings_action,
                                         .app_reset = demo_settings_reset,
                                         .app_run = demo_settings_run,

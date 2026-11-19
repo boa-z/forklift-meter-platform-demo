@@ -44,8 +44,6 @@ python products/demo/tools/check_docs.py
 
 
 
-## 固件与 CAN OTA
+## 固件
 
-在 Framework SDK 集成中通过 `HMI_PRODUCT_ROOT` 选择本 Product。SDK 镜像、更新包生成及 CAN 刷入遵循 Framework 的 `docs/build/build.md` 和 `docs/ota/can-update.md`。板级配置与传输属于 Framework/SDK，不在 Product 内复制第二套 OTA 实现。
-
-图集更新画面仅为 `--update-preview download`，不生成更新包、不传输或安装固件。真实 OTA 结果需要板端更新前后身份和传输原始日志。
+在 Framework SDK 集成中通过 `HMI_PRODUCT_ROOT` 选择本 Product，按 Framework 的 `docs/build/build.md` 构建 SDK 镜像。

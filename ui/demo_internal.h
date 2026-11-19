@@ -4,7 +4,6 @@
 #include "generated/demo_icons.h"
 #include "ui/common/i18n/hmi_i18n_runtime.h"
 #include "ui/widgets/meter_widgets.h"
-#include "ui/widgets/meter_update_widget.h"
 #include "ui/demo_i18n.h"
 #include "ui/demo_theme.h"
 #include "ui/demo_ui.h"
@@ -49,7 +48,6 @@ typedef struct
 {
     lv_obj_t *root, *pages[DEMO_PAGE_COUNT], *nav[DEMO_PAGE_COUNT], *nav_labels[DEMO_PAGE_COUNT],
         *nav_icons[DEMO_PAGE_COUNT], *connection, *clock;
-    meter_update_widget_t update_widget;
     hmi_ui_actions_t actions;
     unsigned page;
     demo_presentation_t view;

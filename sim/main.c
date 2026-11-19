@@ -54,9 +54,6 @@ int main(int argc, char **argv)
 {
     unsigned frames = 0, page = 0, subpage = 0;
     bool smoke = false, hidden = false;
-    const char *update_preview = NULL;
-    unsigned update_percent = 37;
-    hmi_update_state_t update_phase = HMI_UPDATE_DOWNLOADING;
     const char *capture = NULL, *settings = NULL, *visual = NULL, *set_units = NULL, *set_language = NULL;
     demo_scenario_t scenario = DEMO_NORMAL;
     const char *fixture = NULL;
@@ -67,16 +64,6 @@ int main(int argc, char **argv)
             smoke = true;
             hidden = true;
             frames = 240;
-        }
-        else if (!strcmp(argv[i], "--update-preview") && i + 1 < argc)
-            update_preview = argv[++i];
-        else if (!strcmp(argv[i], "--update-percent") && i + 1 < argc)
-        {
-            char *end;
-            unsigned long parsed = strtoul(argv[++i], &end, 10);
-            if (*end || end == argv[i] || parsed > 100)
-                return 2;
-            update_percent = (unsigned)parsed;
         }
         else if (!strcmp(argv[i], "--fixture") && i + 1 < argc)
             fixture = argv[++i];
@@ -127,9 +114,7 @@ int main(int argc, char **argv)
                    "normal|warning|stale|offline|error|unknown] [--visual "
                    "min|mid|max] [--capture image.bmp] [--page 0..3] [--subpage 0..1] [--settings "
                    "file] [--set-units metric|imperial] [--set-language english|chinese] "
-                   "[--update-preview "
-                   "idle|download|transferred|verify|ready|durable|activate|activated|confirmed|aborted|"
-                   "failed] [--update-percent 0..100]\n");
+                   "\n");
             return !strcmp(argv[i], "--help") ? 0 : 2;
         }
     }
@@ -138,20 +123,6 @@ int main(int argc, char **argv)
         (set_units && strcmp(set_units, "metric") && strcmp(set_units, "imperial")) ||
         (set_language && strcmp(set_language, "english") && strcmp(set_language, "chinese")))
         return 2;
-    if (update_preview)
-    {
-        const char *names[] = {"idle",     "download",  "transferred", "verify",  "ready", "durable",
-                               "activate", "activated", "confirmed",   "aborted", "failed"};
-        bool found = false;
-        for (unsigned i = 0; i < sizeof(names) / sizeof(names[0]); ++i)
-            if (!strcmp(update_preview, names[i]))
-            {
-                update_phase = (hmi_update_state_t)i;
-                found = true;
-            }
-        if (!found || smoke || page)
-            return 2;
-    }
     const hmi_product_t *product = hmi_product_get();
     hmi_core_t core;
     hmi_runtime_t runtime;
@@ -260,19 +231,7 @@ int main(int argc, char **argv)
         hmi_runtime_step(&runtime, &core, now, true);
         lv_tick_inc(16);
         uint64_t start = hmi_host_counter();
-        if (!update_preview || n == 0)
-            product->ui->present(ui, &core.snapshot, 16);
-        if (update_preview)
-        {
-            hmi_update_view_t view = {.visible = true,
-                                        .state = update_phase,
-                                        .received = update_percent * 10485u,
-                                        .total = 1048500u,
-                                        .error = update_phase == HMI_UPDATE_FAILED ? 7u : 0u,
-                                        .current_version = "demo-current",
-                                        .target_version = "demo-candidate"};
-            demo_ui_update_preview(ui, &view, core.snapshot.language);
-        }
+        product->ui->present(ui, &core.snapshot, 16);
         hmi_host_nvm_poll(nvm, SDL_GetTicks());
         lv_timer_handler();
         double us = hmi_host_us(start, hmi_host_counter());

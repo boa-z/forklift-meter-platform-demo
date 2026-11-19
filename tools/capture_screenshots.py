@@ -26,8 +26,6 @@ def main():
             cases.append((name + '-' + code, language, page, subpage, ['--visual', 'mid']))
     for scenario in ('warning', 'stale', 'unknown', 'error', 'offline'):
         cases.append(('dashboard-' + scenario + '-zh-CN', 'chinese', 0, 0, ['--scenario', scenario]))
-    cases.append(('update-download-zh-CN', 'chinese', 0, 0,
-                  ['--visual', 'mid', '--update-preview', 'download', '--update-percent', '45']))
     captured = []
     with tempfile.TemporaryDirectory(prefix='demo_screenshots_') as temp:
         for name, language, page, subpage, scenario in cases:
